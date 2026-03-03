@@ -49,3 +49,9 @@ uploads/
 
 # Docker
 docker/data/
+
+# Agent / AI Config
+.agents/
+.agent/
+_agents/
+_agent/
