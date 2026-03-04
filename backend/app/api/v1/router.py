@@ -14,6 +14,7 @@ from app.api.v1 import (
     policies,
     talents,
     users,
+    stats,
 )
 
 api_router = APIRouter(prefix="/api/v1")
@@ -31,3 +32,4 @@ api_router.include_router(collaboration.router, prefix="/collaboration", tags=["
 api_router.include_router(insights.router, prefix="/insights", tags=["产业洞察"])
 api_router.include_router(chat.router, prefix="/chat", tags=["AI对话"])
 api_router.include_router(messages.router, prefix="/messages", tags=["消息中心"])
+api_router.include_router(stats.router, prefix="/stats", tags=["实时大屏"])

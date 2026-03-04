@@ -1,12 +1,16 @@
-import React from 'react';
-import { ConfigProvider } from 'antd';
-import zhCN from 'antd/locale/zh_CN';
-import AppRouter from '@/router';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/auth/LoginPage';
 
-const App: React.FC = () => (
-  <ConfigProvider locale={zhCN} theme={{ token: { colorPrimary: '#1677ff' } }}>
-    <AppRouter />
-  </ConfigProvider>
-);
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
 
 export default App;
