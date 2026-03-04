@@ -40,22 +40,6 @@
   --border-light: #edf2f7;
 }
 
-.dark {
-  --bg-main: #020617;
-  /* slate-950 */
-  --bg-panel: #0F172A;
-  /* slate-900 */
-  --bg-panel-hover: #1E293B;
-  /* slate-800 */
-  --text-main: #F8FAFC;
-  /* slate-50 */
-  --text-muted: #94A3B8;
-  /* slate-400 */
-  --border-main: #1E293B;
-  /* slate-800 */
-  --border-light: #334155;
-  /* slate-700 */
-}
 
 /* Glassmorphism utility */
 .glass-card {

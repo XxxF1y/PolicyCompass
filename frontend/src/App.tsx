@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/auth/LoginPage';
 import MainLayout from './layouts/MainLayout';
 import DashboardPage from './pages/dashboard/DashboardPage';
+import ProfilePage from './pages/profile/ProfilePage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         {/* Protected Dashboard Routes */}
         <Route path="/dashboard" element={<MainLayout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="profile" element={<ProfilePage />} />
           {/* Add more nested dashboard routes here later */}
         </Route>
 

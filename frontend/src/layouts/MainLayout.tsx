@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -12,28 +12,21 @@ import {
     AlertCircle,
     UserCircle2,
     FolderOpen,
-    Bell,
-    Sun,
-    Moon
+    Bell
 } from 'lucide-react';
 
 export default function MainLayout() {
     const navigate = useNavigate();
     const location = useLocation();
-    const [isDarkMode, setIsDarkMode] = useState(true);
 
     // Apply dark mode class to html document
     useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }, [isDarkMode]);
+        document.documentElement.classList.remove('dark');
+    }, []);
 
     const menuItems = [
         { path: '/dashboard', label: '工作台总览', icon: LayoutDashboard },
-        { path: '/profile', label: '画像中心', icon: UserCircle2 },
+        { path: '/dashboard/profile', label: '画像中心', icon: UserCircle2 },
         { path: '/matching', label: '智能匹配', icon: Target },
         { path: '/applications', label: '申报中心', icon: FolderOpen },
         { path: '/policies', label: '政策中心', icon: Library },
@@ -117,13 +110,6 @@ export default function MainLayout() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => setIsDarkMode(!isDarkMode)}
-                            className="p-2 text-adaptive-text-muted hover:text-adaptive-text transition-colors rounded-full hover:bg-adaptive-panel-hover"
-                            title="切换主题"
-                        >
-                            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                        </button>
                         <button className="relative p-2 text-adaptive-text-muted hover:text-adaptive-text transition-colors rounded-full hover:bg-adaptive-panel-hover">
                             <AlertCircle className="w-5 h-5" />
                             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-cta-500 rounded-full border border-adaptive-panel"></span>

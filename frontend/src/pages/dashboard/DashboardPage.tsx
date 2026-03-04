@@ -15,6 +15,7 @@ import {
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import GrowthNavigator from './components/GrowthNavigator';
 
 export default function DashboardPage() {
     const [stats, setStats] = useState<any>(null);
@@ -247,6 +248,8 @@ export default function DashboardPage() {
             </div>
 
             {/* Platform Stats Row (Powered by actual API) */}
+            <GrowthNavigator />
+
             {stats && (
                 <div className="mt-8 pt-8 border-t border-adaptive-border">
                     <p className="text-adaptive-text-muted text-sm mb-4 font-medium flex items-center gap-2">
