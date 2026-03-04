@@ -3,16 +3,58 @@
 @theme {
   --color-primary-50: #F0F9FF;
   --color-primary-100: #E0F2FE;
-  --color-primary-500: #0EA5E9;
-  --color-primary-600: #0284C7;
-  --color-secondary-400: #38BDF8;
-  --color-cta-500: #F97316;
-  --color-cta-600: #EA580C;
+  --color-primary-500: #3182ce;
+  --color-primary-600: #1a365d;
+  --color-secondary-400: #3182ce;
+  --color-cta-500: #d69e2e;
+  --color-cta-600: #e53e3e;
+
+  --color-brand-deep: #1a365d;
+  --color-brand-tech: #3182ce;
+  --color-success: #38a169;
+  --color-warning: #d69e2e;
+  --color-danger: #e53e3e;
+
   --color-text-main: #0C4A6E;
   --color-text-muted: #475569;
 
-  --font-heading: 'Fira Code', monospace;
-  --font-body: 'Fira Sans', sans-serif;
+  --font-heading: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+
+  --color-adaptive-bg: var(--bg-main);
+  --color-adaptive-panel: var(--bg-panel);
+  --color-adaptive-panel-hover: var(--bg-panel-hover);
+  --color-adaptive-text: var(--text-main);
+  --color-adaptive-text-muted: var(--text-muted);
+  --color-adaptive-border: var(--border-main);
+  --color-adaptive-border-light: var(--border-light);
+}
+
+:root {
+  --bg-main: #f7fafc;
+  --bg-panel: #ffffff;
+  --bg-panel-hover: #edf2f7;
+  --text-main: #1a202c;
+  --text-muted: #718096;
+  --border-main: #e2e8f0;
+  --border-light: #edf2f7;
+}
+
+.dark {
+  --bg-main: #020617;
+  /* slate-950 */
+  --bg-panel: #0F172A;
+  /* slate-900 */
+  --bg-panel-hover: #1E293B;
+  /* slate-800 */
+  --text-main: #F8FAFC;
+  /* slate-50 */
+  --text-muted: #94A3B8;
+  /* slate-400 */
+  --border-main: #1E293B;
+  /* slate-800 */
+  --border-light: #334155;
+  /* slate-700 */
 }
 
 /* Glassmorphism utility */
@@ -20,14 +62,14 @@
   @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl;
 }
 
-.glass-card-dark {
-  @apply bg-slate-900/80 backdrop-blur-md border border-slate-700/50 shadow-xl rounded-2xl;
+.glass-card-adaptive {
+  @apply bg-adaptive-panel/80 backdrop-blur-md border border-adaptive-border shadow rounded-lg;
 }
 
 body {
   font-family: var(--font-body);
-  color: var(--color-text-main);
-  background-color: var(--color-primary-50);
+  color: var(--color-adaptive-text);
+  background-color: var(--color-adaptive-bg);
 }
 
 h1,

@@ -1,39 +1,54 @@
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Target,
-    FileText,
     Library,
-    MessageSquare,
     Building2,
     Settings,
     Search,
     LogOut,
     BrainCircuit,
-    AlertCircle
+    AlertCircle,
+    UserCircle2,
+    FolderOpen,
+    Bell,
+    Sun,
+    Moon
 } from 'lucide-react';
 
 export default function MainLayout() {
     const navigate = useNavigate();
     const location = useLocation();
+    const [isDarkMode, setIsDarkMode] = useState(true);
+
+    // Apply dark mode class to html document
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [isDarkMode]);
 
     const menuItems = [
         { path: '/dashboard', label: '工作台总览', icon: LayoutDashboard },
+        { path: '/profile', label: '画像中心', icon: UserCircle2 },
         { path: '/matching', label: '智能匹配', icon: Target },
-        { path: '/materials', label: '材料工厂', icon: FileText },
+        { path: '/applications', label: '申报中心', icon: FolderOpen },
         { path: '/policies', label: '政策中心', icon: Library },
-        { path: '/collaboration', label: '产业协同', icon: MessageSquare },
+        { path: '/messages', label: '消息中心', icon: Bell },
         { path: '/park', label: '园区空间', icon: Building2 },
     ];
 
     return (
-        <div className="flex h-screen bg-slate-900 text-slate-300 font-sans overflow-hidden">
+        <div className="flex h-screen bg-adaptive-panel text-adaptive-text font-sans overflow-hidden">
             {/* Sidebar */}
-            <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col relative z-20 shadow-2xl">
+            <aside className="w-64 bg-adaptive-panel border-r border-adaptive-border flex flex-col relative z-20 shadow-2xl">
                 {/* Logo */}
-                <div className="h-16 flex items-center px-6 border-b border-slate-800 cursor-pointer" onClick={() => navigate('/dashboard')}>
+                <div className="h-16 flex items-center px-6 border-b border-adaptive-border cursor-pointer" onClick={() => navigate('/dashboard')}>
                     <BrainCircuit className="w-6 h-6 text-primary-500 mr-3" />
-                    <span className="font-heading font-bold text-lg text-white tracking-wide">Policy<span className="text-primary-500">Compass</span></span>
+                    <span className="font-heading font-bold text-lg text-adaptive-text tracking-wide">Policy<span className="text-primary-500">Compass</span></span>
                 </div>
 
                 {/* Navigation */}
@@ -47,10 +62,10 @@ export default function MainLayout() {
                                 onClick={() => navigate(item.path)}
                                 className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group ${isActive
                                     ? 'bg-primary-500/10 text-primary-400 font-medium'
-                                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                                    : 'text-adaptive-text-muted hover:bg-adaptive-panel-hover hover:text-adaptive-text'
                                     }`}
                             >
-                                <Icon className={`w-5 h-5 mr-3 ${isActive ? 'text-primary-400' : 'text-slate-500 group-hover:text-slate-400'}`} />
+                                <Icon className={`w-5 h-5 mr-3 ${isActive ? 'text-primary-400' : 'text-adaptive-text-muted group-hover:text-adaptive-text-muted'}`} />
                                 {item.label}
                                 {isActive && (
                                     <div className="ml-auto w-1 h-4 bg-primary-500 rounded-full" />
@@ -61,25 +76,25 @@ export default function MainLayout() {
                 </nav>
 
                 {/* User Info & Settings */}
-                <div className="p-4 border-t border-slate-800">
-                    <button className="w-full flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors mb-2">
-                        <Settings className="w-5 h-5 mr-3 text-slate-500" />
+                <div className="p-4 border-t border-adaptive-border">
+                    <button className="w-full flex items-center px-3 py-2 rounded-lg text-adaptive-text-muted hover:bg-adaptive-panel-hover hover:text-adaptive-text transition-colors mb-2">
+                        <Settings className="w-5 h-5 mr-3 text-adaptive-text-muted" />
                         系统设置
                     </button>
 
                     <div className="flex items-center px-3 py-2 mt-4 cursor-pointer group">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-500 to-secondary-500 p-[2px] mr-3">
-                            <div className="w-full h-full rounded-full bg-slate-900 border-2 border-slate-900 flex items-center justify-center">
-                                <span className="text-xs font-bold text-white">OPC</span>
+                            <div className="w-full h-full rounded-full bg-adaptive-panel border-2 border-adaptive-border flex items-center justify-center">
+                                <span className="text-xs font-bold text-adaptive-text">OPC</span>
                             </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">超级个体测试账户</p>
-                            <p className="text-xs text-slate-500 truncate">科技人才</p>
+                            <p className="text-sm font-medium text-adaptive-text truncate">超级个体测试账户</p>
+                            <p className="text-xs text-adaptive-text-muted truncate">科技人才</p>
                         </div>
                         <button
                             onClick={() => navigate('/login')}
-                            className="p-1 text-slate-500 hover:text-red-400 transition-colors"
+                            className="p-1 text-adaptive-text-muted hover:text-red-400 transition-colors"
                             title="退出登录"
                         >
                             <LogOut className="w-4 h-4" />
@@ -89,22 +104,29 @@ export default function MainLayout() {
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 flex flex-col relative min-w-0 bg-[#0B1120]">
+            <main className="flex-1 flex flex-col relative min-w-0 bg-adaptive-bg">
                 {/* Header */}
-                <header className="h-16 bg-slate-900/50 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10">
-                    <div className="flex items-center w-96 bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-1.5 focus-within:border-primary-500/50 focus-within:ring-1 focus-within:ring-primary-500/50 transition-all">
-                        <Search className="w-4 h-4 text-slate-500 mr-2" />
+                <header className="h-16 bg-adaptive-panel/50 backdrop-blur-md border-b border-adaptive-border flex items-center justify-between px-8 sticky top-0 z-10">
+                    <div className="flex items-center w-96 bg-adaptive-panel/50 border border-adaptive-border-light/50 rounded-lg px-3 py-1.5 focus-within:border-primary-500/50 focus-within:ring-1 focus-within:ring-primary-500/50 transition-all">
+                        <Search className="w-4 h-4 text-adaptive-text-muted mr-2" />
                         <input
                             type="text"
                             placeholder="搜索政策、材料或园区..."
-                            className="w-full bg-transparent border-none focus:outline-none text-sm text-slate-200 placeholder:text-slate-600"
+                            className="w-full bg-transparent border-none focus:outline-none text-sm text-adaptive-text placeholder:text-adaptive-text-muted"
                         />
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <button className="relative p-2 text-slate-400 hover:text-slate-200 transition-colors rounded-full hover:bg-slate-800">
+                        <button
+                            onClick={() => setIsDarkMode(!isDarkMode)}
+                            className="p-2 text-adaptive-text-muted hover:text-adaptive-text transition-colors rounded-full hover:bg-adaptive-panel-hover"
+                            title="切换主题"
+                        >
+                            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                        </button>
+                        <button className="relative p-2 text-adaptive-text-muted hover:text-adaptive-text transition-colors rounded-full hover:bg-adaptive-panel-hover">
                             <AlertCircle className="w-5 h-5" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-cta-500 rounded-full border border-slate-900"></span>
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-cta-500 rounded-full border border-adaptive-panel"></span>
                         </button>
                     </div>
                 </header>
