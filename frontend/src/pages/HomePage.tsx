@@ -13,14 +13,15 @@ export default function HomePage() {
     const [stats, setStats] = useState<any>(null);
 
     useEffect(() => {
-        // Fetch real-time stats from backend
         axios.get('/api/v1/stats')
             .then(res => {
-                if (res.data.status === 'success') {
+                if (res.data && res.data.data) {
                     setStats(res.data.data);
+                } else {
+                    setStats(res.data);
                 }
             })
-            .catch(err => console.error("Failed to load stats:", err));
+            .catch(err => console.error("Failed to fetch mock stats", err));
     }, []);
 
     return (

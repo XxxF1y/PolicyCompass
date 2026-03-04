@@ -50,7 +50,7 @@ export default function LoginPage() {
                         </button>
                     </div>
 
-                    <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); navigate('/'); }}>
+                    <form className="space-y-5">
                         <div className="space-y-1">
                             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">账号 / 手机号</label>
                             <div className="relative">
@@ -98,7 +98,8 @@ export default function LoginPage() {
                         )}
 
                         <button
-                            type="submit"
+                            type="button"
+                            onClick={() => navigate('/dashboard')}
                             className="w-full py-3.5 mt-4 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-bold text-base transition-all shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_25px_rgba(14,165,233,0.5)] flex items-center justify-center gap-2 group"
                         >
                             <span>登录引擎</span>
