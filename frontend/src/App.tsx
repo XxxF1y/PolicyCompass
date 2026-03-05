@@ -4,6 +4,8 @@ import LoginPage from './pages/auth/LoginPage';
 import MainLayout from './layouts/MainLayout';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ProfilePage from './pages/profile/ProfilePage';
+import MatchingPage from './pages/matching/MatchingPage';
+import ApplicationsPage from './pages/applications/ApplicationsPage';
 
 function App() {
   return (
@@ -12,11 +14,13 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Protected Dashboard Routes */}
-        <Route path="/dashboard" element={<MainLayout />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          {/* Add more nested dashboard routes here later */}
+        {/* All pages share the MainLayout with sidebar */}
+        <Route element={<MainLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/policies" element={<MatchingPage />} />
+          <Route path="/applications" element={<ApplicationsPage />} />
+          {/* Add more routes here later */}
         </Route>
 
         {/* Fallback */}

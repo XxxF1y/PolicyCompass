@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
-    Target,
     Library,
     Building2,
     Settings,
@@ -26,10 +25,9 @@ export default function MainLayout() {
 
     const menuItems = [
         { path: '/dashboard', label: '工作台总览', icon: LayoutDashboard },
-        { path: '/dashboard/profile', label: '画像中心', icon: UserCircle2 },
-        { path: '/matching', label: '智能匹配', icon: Target },
-        { path: '/applications', label: '申报中心', icon: FolderOpen },
+        { path: '/profile', label: '画像中心', icon: UserCircle2 },
         { path: '/policies', label: '政策中心', icon: Library },
+        { path: '/applications', label: '申报中心', icon: FolderOpen },
         { path: '/messages', label: '消息中心', icon: Bell },
         { path: '/park', label: '园区空间', icon: Building2 },
     ];
