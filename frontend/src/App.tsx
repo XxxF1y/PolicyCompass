@@ -6,6 +6,8 @@ import DashboardPage from './pages/dashboard/DashboardPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import MatchingPage from './pages/matching/MatchingPage';
 import ApplicationsPage from './pages/applications/ApplicationsPage';
+import MessagesPage from './pages/messages/MessagesPage';
+import CollaborationPage from './pages/collaboration/CollaborationPage';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/policies" element={<MatchingPage />} />
           <Route path="/applications" element={<ApplicationsPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/collaboration" element={<CollaborationPage />} />
           {/* Add more routes here later */}
         </Route>
 

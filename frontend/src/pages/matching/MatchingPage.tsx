@@ -9,7 +9,6 @@ import {
     MapPin,
     Tag,
 
-    Mail,
     Eye,
     Plus
 } from 'lucide-react';
@@ -275,10 +274,7 @@ export default function MatchingPage() {
                                     <Plus className="w-4 h-4" />
                                     生成申报材料
                                 </button>
-                                <button className="w-full flex items-center justify-center gap-1.5 text-slate-500 hover:text-blue-600 font-medium text-xs transition-colors duration-200 pt-1">
-                                    <Mail className="w-3.5 h-3.5" />
-                                    发送园区介绍
-                                </button>
+
                             </div>
                         </div>
                     </div>

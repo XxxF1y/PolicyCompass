@@ -11,7 +11,8 @@ import {
     AlertCircle,
     UserCircle2,
     FolderOpen,
-    Bell
+    Bell,
+    Network
 } from 'lucide-react';
 
 export default function MainLayout() {
@@ -28,6 +29,7 @@ export default function MainLayout() {
         { path: '/profile', label: '画像中心', icon: UserCircle2 },
         { path: '/policies', label: '政策中心', icon: Library },
         { path: '/applications', label: '申报中心', icon: FolderOpen },
+        { path: '/collaboration', label: '产业协同', icon: Network },
         { path: '/messages', label: '消息中心', icon: Bell },
         { path: '/park', label: '园区空间', icon: Building2 },
     ];
