@@ -1,10 +1,21 @@
 import { useState } from 'react';
 import { BrainCircuit, ArrowRight, Lock, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginPage() {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [loginType, setLoginType] = useState<'password' | 'code'>('password');
+
+    const handleLogin = (role: 'enterprise' | 'park') => {
+        login(role);
+        if (role === 'park') {
+            navigate('/park/dashboard');
+        } else {
+            navigate('/dashboard');
+        }
+    };
 
     return (
         <div className="min-h-screen bg-adaptive-bg relative overflow-hidden flex flex-col justify-center items-center p-4">
@@ -97,19 +108,30 @@ export default function LoginPage() {
                             </div>
                         )}
 
-                        <button
-                            type="button"
-                            onClick={() => navigate('/dashboard')}
-                            className="w-full py-3.5 mt-6 bg-brand-tech hover:bg-brand-deep text-white rounded-lg font-bold text-base transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group"
-                        >
-                            <span>登录引擎</span>
-                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </button>
+                        <div className="flex flex-col gap-3 mt-6">
+                            <button
+                                type="button"
+                                onClick={() => handleLogin('enterprise')}
+                                className="w-full py-3.5 bg-brand-tech hover:bg-brand-deep text-white rounded-lg font-bold text-base transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group"
+                            >
+                                <span>企业 / 人才登录</span>
+                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleLogin('park')}
+                                className="w-full py-3.5 bg-white hover:bg-slate-50 text-brand-deep border border-brand-tech/30 rounded-lg font-bold text-base transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 group"
+                            >
+                                <span>园区工作台登录</span>
+                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-brand-tech" />
+                            </button>
+                        </div>
                     </form>
 
                     <div className="mt-8 pt-6 border-t border-adaptive-border-light text-center">
                         <p className="text-adaptive-text-muted text-sm">
-                            还没有账号？ <a href="#" className="text-brand-tech font-bold hover:underline transition-all">立即免费注册</a>
+                            还没有账号？ <button type="button" onClick={() => navigate('/register')} className="text-brand-tech font-bold hover:underline transition-all">立即免费注册</button>
                         </p>
                     </div>
                 </div>

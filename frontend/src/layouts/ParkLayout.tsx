@@ -2,20 +2,19 @@ import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
-    Library,
-    Settings,
     Search,
     LogOut,
     BrainCircuit,
     AlertCircle,
-    UserCircle2,
-    FolderOpen,
-    Bell,
-    Network
+    Settings,
+    FileText,
+    PieChart,
+    Building2,
+    Users
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function MainLayout() {
+export default function ParkLayout() {
     const navigate = useNavigate();
     const location = useLocation();
     const { logout } = useAuth();
@@ -26,12 +25,10 @@ export default function MainLayout() {
     }, []);
 
     const menuItems = [
-        { path: '/dashboard', label: '工作台总览', icon: LayoutDashboard },
-        { path: '/profile', label: '画像中心', icon: UserCircle2 },
-        { path: '/policies', label: '政策中心', icon: Library },
-        { path: '/applications', label: '申报中心', icon: FolderOpen },
-        { path: '/collaboration', label: '产业协同', icon: Network },
-        { path: '/messages', label: '消息中心', icon: Bell },
+        { path: '/park/dashboard', label: '园区工作台', icon: LayoutDashboard },
+        { path: '/park/investment', label: '智能招商', icon: Users },
+        { path: '/park/policies', label: '政策发布与推送', icon: FileText },
+        { path: '/park/insights', label: '产业洞察', icon: PieChart },
     ];
 
     const handleLogout = () => {
@@ -44,9 +41,9 @@ export default function MainLayout() {
             {/* Sidebar */}
             <aside className="w-64 bg-adaptive-panel border-r border-adaptive-border flex flex-col relative z-20 shadow-2xl">
                 {/* Logo */}
-                <div className="h-16 flex items-center px-6 border-b border-adaptive-border cursor-pointer" onClick={() => navigate('/dashboard')}>
-                    <BrainCircuit className="w-6 h-6 text-primary-500 mr-3" />
-                    <span className="font-heading font-bold text-lg text-adaptive-text tracking-wide">Policy<span className="text-primary-500">Compass</span></span>
+                <div className="h-16 flex items-center px-6 border-b border-adaptive-border cursor-pointer" onClick={() => navigate('/park/dashboard')}>
+                    <BrainCircuit className="w-6 h-6 text-brand-tech mr-3" />
+                    <span className="font-heading font-bold text-lg text-adaptive-text tracking-wide">Park<span className="text-brand-tech">Space</span></span>
                 </div>
 
                 {/* Navigation */}
@@ -59,14 +56,14 @@ export default function MainLayout() {
                                 key={item.path}
                                 onClick={() => navigate(item.path)}
                                 className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group ${isActive
-                                    ? 'bg-primary-500/10 text-primary-400 font-medium'
+                                    ? 'bg-brand-tech/10 text-brand-deep font-medium'
                                     : 'text-adaptive-text-muted hover:bg-adaptive-panel-hover hover:text-adaptive-text'
                                     }`}
                             >
-                                <Icon className={`w-5 h-5 mr-3 ${isActive ? 'text-primary-400' : 'text-adaptive-text-muted group-hover:text-adaptive-text-muted'}`} />
+                                <Icon className={`w-5 h-5 mr-3 ${isActive ? 'text-brand-tech' : 'text-adaptive-text-muted group-hover:text-adaptive-text-muted'}`} />
                                 {item.label}
                                 {isActive && (
-                                    <div className="ml-auto w-1 h-4 bg-primary-500 rounded-full" />
+                                    <div className="ml-auto w-1 h-4 bg-brand-tech rounded-full" />
                                 )}
                             </button>
                         );
@@ -81,14 +78,14 @@ export default function MainLayout() {
                     </button>
 
                     <div className="flex items-center px-3 py-2 mt-4 cursor-pointer group">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-500 to-secondary-500 p-[2px] mr-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-tech to-brand-deep p-[2px] mr-3">
                             <div className="w-full h-full rounded-full bg-adaptive-panel border-2 border-adaptive-border flex items-center justify-center">
-                                <span className="text-xs font-bold text-adaptive-text">OPC</span>
+                                <Building2 className="w-4 h-4 text-brand-deep" />
                             </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-adaptive-text truncate">超级个体测试账户</p>
-                            <p className="text-xs text-adaptive-text-muted truncate">科技人才</p>
+                            <p className="text-sm font-medium text-adaptive-text truncate">苏州AI园区测试账号</p>
+                            <p className="text-xs text-brand-tech truncate">园区运营方</p>
                         </div>
                         <button
                             onClick={handleLogout}
@@ -105,11 +102,11 @@ export default function MainLayout() {
             <main className="flex-1 flex flex-col relative min-w-0 bg-adaptive-bg">
                 {/* Header */}
                 <header className="h-16 bg-adaptive-panel/50 backdrop-blur-md border-b border-adaptive-border flex items-center justify-between px-8 sticky top-0 z-10">
-                    <div className="flex items-center w-96 bg-adaptive-panel/50 border border-adaptive-border-light/50 rounded-lg px-3 py-1.5 focus-within:border-primary-500/50 focus-within:ring-1 focus-within:ring-primary-500/50 transition-all">
+                    <div className="flex items-center w-96 bg-adaptive-panel/50 border border-adaptive-border-light/50 rounded-lg px-3 py-1.5 focus-within:border-brand-tech/50 focus-within:ring-1 focus-within:ring-brand-tech/50 transition-all">
                         <Search className="w-4 h-4 text-adaptive-text-muted mr-2" />
                         <input
                             type="text"
-                            placeholder="搜索政策、材料或园区..."
+                            placeholder="搜索企业、政策库..."
                             className="w-full bg-transparent border-none focus:outline-none text-sm text-adaptive-text placeholder:text-adaptive-text-muted"
                         />
                     </div>
@@ -117,7 +114,7 @@ export default function MainLayout() {
                     <div className="flex items-center gap-4">
                         <button className="relative p-2 text-adaptive-text-muted hover:text-adaptive-text transition-colors rounded-full hover:bg-adaptive-panel-hover">
                             <AlertCircle className="w-5 h-5" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-cta-500 rounded-full border border-adaptive-panel"></span>
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-adaptive-panel"></span>
                         </button>
                     </div>
                 </header>

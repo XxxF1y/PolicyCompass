@@ -55,3 +55,8 @@ docker/data/
 .agent/
 _agents/
 _agent/
+
+# PRD Documents
+docs/*.txt
+docs/*.docx
+docs/政策罗盘*.docx
