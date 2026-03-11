@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import {
     Clock,
     ChevronRight,
@@ -17,32 +16,42 @@ import {
 } from 'recharts';
 import GrowthNavigator from './components/GrowthNavigator';
 
+import { DashboardService } from '../../services/dashboardService';
+import type { DashboardStats } from '../../types/dashboard';
+
 export default function DashboardPage() {
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Fetch real data from our backend API
-        axios.get('/api/v1/stats')
-            .then(res => {
-                // The API returns { status: "success", data: { total_policies: ... } }
-                if (res.data && res.data.data) {
-                    setStats(res.data.data);
-                } else {
-                    setStats(res.data);
-                }
-            })
-            .catch(err => console.error("Failed to fetch dashboard stats", err));
+        const fetchStats = async () => {
+            try {
+                const data = await DashboardService.getEnterpriseStats();
+                setStats(data);
+            } catch (err) {
+                console.error("Failed to fetch dashboard stats", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchStats();
     }, []);
 
-    // Mock trend data for the area chart
-    const trendData = [
-        { month: 'Jan', subsidies: 0 },
-        { month: 'Feb', subsidies: 12 },
-        { month: 'Mar', subsidies: 45 },
-        { month: 'Apr', subsidies: 30 },
-        { month: 'May', subsidies: 80 },
-        { month: 'Jun', subsidies: 120 }
-    ];
+    if (isLoading || !stats) {
+        return (
+            <div className="space-y-6 max-w-7xl mx-auto animate-pulse">
+                <div className="h-28 bg-slate-100 rounded-2xl border border-slate-200"></div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-slate-100 rounded-2xl border border-slate-200"></div>)}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                    <div className="lg:col-span-2 h-96 bg-slate-100 rounded-2xl border border-slate-200"></div>
+                    <div className="h-96 bg-slate-100 rounded-2xl border border-slate-200"></div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
@@ -50,7 +59,7 @@ export default function DashboardPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-adaptive-panel/40 p-6 rounded-2xl border border-adaptive-border">
                 <div className="flex flex-col">
                     <h1 className="text-2xl font-bold font-heading text-adaptive-text">晚上好，超级个体测试账户</h1>
-                    <p className="text-adaptive-text-muted mt-2">您本周有 <span className="text-primary-400 font-medium">3个</span> 高匹配政策即将开放申报。</p>
+                    <p className="text-adaptive-text-muted mt-2">您本周有 <span className="text-primary-400 font-medium">{stats.openPoliciesCount}个</span> 高匹配政策即将开放申报。</p>
                 </div>
 
                 {/* Profile Completion Indicator */}
@@ -58,9 +67,9 @@ export default function DashboardPage() {
                     <div className="relative w-14 h-14 flex items-center justify-center">
                         <svg className="w-full h-full transform -rotate-90">
                             <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-700" />
-                            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray="150" strokeDashoffset="105" className="text-cta-500" />
+                            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray="150" strokeDashoffset={150 - (150 * stats.profileCompletion / 100)} className="text-cta-500" />
                         </svg>
-                        <span className="absolute text-xs font-bold text-adaptive-text">30%</span>
+                        <span className="absolute text-xs font-bold text-adaptive-text">{stats.profileCompletion}%</span>
                     </div>
                     <div>
                         <p className="text-sm font-medium text-adaptive-text flex items-center gap-1">画像完整度偏低 <ShieldAlert className="w-4 h-4 text-cta-500" /></p>
@@ -80,13 +89,13 @@ export default function DashboardPage() {
                         <TrendingUp className="w-4 h-4 text-primary-500" />
                     </div>
                     <div className="flex items-baseline gap-2 mb-3">
-                        <h3 className="text-3xl font-bold text-adaptive-text font-heading">15.5</h3>
-                        <span className="text-adaptive-text-muted text-sm">万元</span>
+                        <h3 className="text-3xl font-bold text-adaptive-text font-heading">{stats.estimatedAmount}</h3>
+                        <span className="text-adaptive-text-muted text-sm">{stats.amountUnit}</span>
                     </div>
                     {/* OPC Breakdown Tags */}
                     <div className="flex gap-2">
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary-500/10 text-primary-400 border border-primary-500/20">含 算力券 5万</span>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-secondary-500/10 text-secondary-400 border border-secondary-500/20">含 模型券 2万</span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary-500/10 text-primary-400 border border-primary-500/20">含 算力券 {stats.opcComputeCoupon}万</span>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-secondary-500/10 text-secondary-400 border border-secondary-500/20">含 模型券 {stats.opcModelCoupon}万</span>
                     </div>
                 </div>
 
@@ -97,11 +106,11 @@ export default function DashboardPage() {
                         <Target className="w-4 h-4 text-cta-400" />
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <h3 className="text-3xl font-bold text-adaptive-text font-heading">8</h3>
+                        <h3 className="text-3xl font-bold text-adaptive-text font-heading">{stats.highlyMatchedCount}</h3>
                         <span className="text-adaptive-text-muted text-sm">项</span>
                     </div>
                     <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-cta-400 bg-cta-500/10 rounded-md px-2 py-1 w-fit border border-cta-500/20">
-                        <Lock className="w-3 h-3" /> 4 项因【算法备案】被阻断
+                        <Lock className="w-3 h-3" /> {stats.blockedPoliciesCount} 项因卡点被阻断
                     </div>
                 </div>
 
@@ -111,7 +120,7 @@ export default function DashboardPage() {
                         <FileSignature className="w-4 h-4 text-purple-400" />
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <h3 className="text-3xl font-bold text-adaptive-text font-heading">2</h3>
+                        <h3 className="text-3xl font-bold text-adaptive-text font-heading">{stats.processingCount}</h3>
                         <span className="text-adaptive-text-muted text-sm">份</span>
                     </div>
                 </div>
@@ -123,10 +132,10 @@ export default function DashboardPage() {
                         <AlertCircle className="w-4 h-4 text-cta-500" />
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <h3 className="text-3xl font-bold text-cta-500 font-heading">1</h3>
+                        <h3 className="text-3xl font-bold text-cta-500 font-heading">{stats.fatalBlockerCount}</h3>
                         <span className="text-adaptive-text-muted text-sm">待修复</span>
                     </div>
-                    <p className="text-xs text-adaptive-text-muted mt-2 truncate">需完成《算法备案》前置解锁</p>
+                    <p className="text-xs text-adaptive-text-muted mt-2 truncate">{stats.fatalBlockerReason}</p>
                 </div>
             </div>
 
@@ -144,7 +153,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <AreaChart data={stats.trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorSubsidies" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.3} />

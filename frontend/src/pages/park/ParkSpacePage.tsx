@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Users, FileText, PieChart, Upload, Search, Filter,
     ArrowRight, Building2, Bell, CheckCircle2,
-    Target, Send, Briefcase, Zap
+    Target, Send, Briefcase, Zap, MapPin, TrendingUp, Cpu
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis,
@@ -10,51 +11,53 @@ import {
     BarChart, Bar
 } from 'recharts';
 
+import { DashboardService } from '../../services/dashboardService';
+import type { ParkStats } from '../../types/dashboard';
+
 type ParkTab = 'investment' | 'policies' | 'insights';
 
-// 模拟数据：招商目标
-const investmentTargets = [
-    {
-        id: 1,
-        name: '星瞳算力架构科技有限公司',
-        direction: 'AI 基础设施 / 算力编排',
-        value: '高 (强链)',
-        stage: 'A轮',
-        probability: '75%',
-        reason: '该公司算力中心租约即将到期，我园区算力券政策对其吸引力极高。',
-    },
-    {
-        id: 2,
-        name: '某自动驾驶算法有限公司',
-        direction: '具身智能 / 自动驾驶',
-        value: '极高 (补链)',
-        stage: 'B轮',
-        probability: '60%',
-        reason: '园区恰好缺乏头部自动驾驶算法企业，入驻可带动上下游10家企业聚集。',
-    },
-    {
-        id: 3,
-        name: '未名大语言模型团队 (张博士)',
-        direction: '基础大模型',
-        value: '中 (孵化)',
-        stage: '天使轮 (OPC)',
-        probability: '85%',
-        reason: '该OPC团队急需免费工位与早期算力支持，匹配我园区的"雏鹰计划"。',
-    }
-];
-
-// 模拟数据：产业趋势趋势图
-const trendData = [
-    { name: '1月', aiCount: 45, value: 120 },
-    { name: '2月', aiCount: 52, value: 180 },
-    { name: '3月', aiCount: 61, value: 250 },
-    { name: '4月', aiCount: 75, value: 390 },
-    { name: '5月', aiCount: 88, value: 480 },
-    { name: '6月', aiCount: 105, value: 650 },
-];
-
 export default function ParkSpacePage() {
-    const [activeTab, setActiveTab] = useState<ParkTab>('investment');
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const pathMap: Record<string, ParkTab> = {
+        '/park/investment': 'investment',
+        '/park/policies': 'policies',
+        '/park/insights': 'insights',
+        '/park/dashboard': 'investment'
+    };
+    const activeTab = pathMap[location.pathname] || 'investment';
+
+    const [stats, setStats] = useState<ParkStats | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const data = await DashboardService.getParkStats();
+                setStats(data);
+            } catch (err) {
+                console.error("Failed to load park stats", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    if (isLoading || !stats) {
+        return (
+            <div className="w-full max-w-[1400px] mx-auto space-y-6 animate-pulse p-8">
+                <div className="h-20 bg-slate-100 rounded-xl mb-8"></div>
+                <div className="h-14 bg-slate-100 w-1/3 rounded-xl mb-8"></div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    {[1, 2, 3].map(i => <div key={i} className="h-32 bg-slate-100 rounded-xl"></div>)}
+                </div>
+                <div className="h-96 bg-slate-100 rounded-xl"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full max-w-[1400px] mx-auto space-y-6 animate-fade-in pb-16 px-4 md:px-8">
@@ -82,30 +85,30 @@ export default function ParkSpacePage() {
             {/* Premium Tabs */}
             <div className="flex items-center gap-2 p-1.5 bg-adaptive-bg/50 border border-adaptive-border rounded-xl w-fit backdrop-blur-sm shadow-sm font-medium">
                 <button
-                    onClick={() => setActiveTab('investment')}
+                    onClick={() => navigate('/park/investment')}
                     className={`px - 5 py - 2.5 rounded - lg transition - all duration - 300 flex items - center gap - 2 text - sm ${activeTab === 'investment'
-                            ? 'bg-white text-brand-deep shadow-sm border border-adaptive-border-light font-bold'
-                            : 'text-adaptive-text-muted hover:text-adaptive-text hover:bg-white/50 border border-transparent'
+                        ? 'bg-white text-brand-deep shadow-sm border border-adaptive-border-light font-bold'
+                        : 'text-adaptive-text-muted hover:text-adaptive-text hover:bg-white/50 border border-transparent'
                         } `}
                 >
                     <Target className="w-4 h-4" />
                     智能招商
                 </button>
                 <button
-                    onClick={() => setActiveTab('policies')}
+                    onClick={() => navigate('/park/policies')}
                     className={`px - 5 py - 2.5 rounded - lg transition - all duration - 300 flex items - center gap - 2 text - sm ${activeTab === 'policies'
-                            ? 'bg-white text-brand-deep shadow-sm border border-adaptive-border-light font-bold'
-                            : 'text-adaptive-text-muted hover:text-adaptive-text hover:bg-white/50 border border-transparent'
+                        ? 'bg-white text-brand-deep shadow-sm border border-adaptive-border-light font-bold'
+                        : 'text-adaptive-text-muted hover:text-adaptive-text hover:bg-white/50 border border-transparent'
                         } `}
                 >
                     <Send className="w-4 h-4" />
                     政策发布与推送
                 </button>
                 <button
-                    onClick={() => setActiveTab('insights')}
+                    onClick={() => navigate('/park/insights')}
                     className={`px - 5 py - 2.5 rounded - lg transition - all duration - 300 flex items - center gap - 2 text - sm ${activeTab === 'insights'
-                            ? 'bg-white text-brand-deep shadow-sm border border-adaptive-border-light font-bold'
-                            : 'text-adaptive-text-muted hover:text-adaptive-text hover:bg-white/50 border border-transparent'
+                        ? 'bg-white text-brand-deep shadow-sm border border-adaptive-border-light font-bold'
+                        : 'text-adaptive-text-muted hover:text-adaptive-text hover:bg-white/50 border border-transparent'
                         } `}
                 >
                     <PieChart className="w-4 h-4" />
@@ -126,7 +129,7 @@ export default function ParkSpacePage() {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-adaptive-text-muted">本月新增补链线索</p>
-                                    <p className="text-2xl font-bold text-slate-800">124 <span className="text-xs text-green-500 font-medium">+15%</span></p>
+                                    <p className="text-2xl font-bold text-slate-800">{stats.newLeads} <span className="text-xs text-green-500 font-medium">+{stats.leadsGrowth}%</span></p>
                                 </div>
                             </div>
                             <div className="bg-white rounded-xl border border-adaptive-border p-6 shadow-sm flex items-center gap-4">
@@ -135,7 +138,7 @@ export default function ParkSpacePage() {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-adaptive-text-muted">OPC 创业者跟踪池</p>
-                                    <p className="text-2xl font-bold text-slate-800">45 <span className="text-xs text-brand-tech font-medium">高优</span></p>
+                                    <p className="text-2xl font-bold text-slate-800">{stats.opcPoolCount} <span className="text-xs text-brand-tech font-medium">高优</span></p>
                                 </div>
                             </div>
                             <div className="bg-white rounded-xl border border-adaptive-border p-6 shadow-sm flex items-center gap-4">
@@ -144,80 +147,164 @@ export default function ParkSpacePage() {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-adaptive-text-muted">已转化入驻企业</p>
-                                    <p className="text-2xl font-bold text-slate-800">8 <span className="text-xs text-green-500 font-medium">+2</span></p>
+                                    <p className="text-2xl font-bold text-slate-800">{stats.convertedCount} <span className="text-xs text-green-500 font-medium">+{stats.convertedGrowth}</span></p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Targets Table */}
-                        <div className="bg-white rounded-xl border border-adaptive-border shadow-sm overflow-hidden">
-                            <div className="p-5 border-b border-adaptive-border flex items-center justify-between">
-                                <h3 className="font-bold text-lg text-slate-800 tracking-tight">AI 智能推荐目标</h3>
-                                <div className="flex items-center gap-2">
+                        {/* Investment Suggestions Panel */}
+                        <div className="bg-white rounded-xl border border-adaptive-border shadow-sm p-6 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-tech/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                            <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2 mb-4 relative z-10">
+                                📋 招商建议
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                                <div className="bg-slate-50 border border-slate-100 rounded-lg p-5">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                            <Cpu className="w-4 h-4" />
+                                        </div>
+                                        <h4 className="font-bold text-slate-800">🎯 补链方向：AI芯片设计企业</h4>
+                                    </div>
+                                    <ul className="space-y-2 text-sm text-slate-600 mt-3">
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-slate-400 font-medium whitespace-nowrap">原因：</span>
+                                            <span>园区AI企业多，但缺少上游芯片设计环节</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-slate-400 font-medium whitespace-nowrap">目标：</span>
+                                            <span className="text-slate-700 font-medium">引进2-3家AI芯片设计企业，形成完整产业链</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div className="bg-slate-50 border border-slate-100 rounded-lg p-5">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                            <TrendingUp className="w-4 h-4" />
+                                        </div>
+                                        <h4 className="font-bold text-slate-800">🎯 强链方向：AI算法企业</h4>
+                                    </div>
+                                    <ul className="space-y-2 text-sm text-slate-600 mt-3">
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-slate-400 font-medium whitespace-nowrap">原因：</span>
+                                            <span>现有AI企业以应用为主，算法层较薄弱</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-slate-400 font-medium whitespace-nowrap">目标：</span>
+                                            <span className="text-slate-700 font-medium">引进1-2家核心算法企业，提升产业链技术含量</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recommendation Cards */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between px-1">
+                                <h3 className="font-bold text-lg text-slate-800 tracking-tight flex items-center gap-2">
+                                    🏢 推荐招商目标
+                                </h3>
+                                <div className="flex items-center gap-3">
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                        <input type="text" placeholder="搜索企业名称或标签..." className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-brand-tech w-64" />
+                                        <input type="text" placeholder="搜索企业名称或标签..." className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-brand-tech w-64 bg-white shadow-sm" />
                                     </div>
-                                    <button className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors">
+                                    <button className="p-2 border border-slate-200 rounded-lg text-slate-500 bg-white hover:text-slate-700 hover:bg-slate-50 shadow-sm transition-colors">
                                         <Filter className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
 
-                            <table className="w-full text-left text-sm text-slate-600">
-                                <thead className="bg-slate-50 text-slate-500 font-medium">
-                                    <tr>
-                                        <th className="px-6 py-4">企业 / 团队名称</th>
-                                        <th className="px-6 py-4">产业标签</th>
-                                        <th className="px-6 py-4">招引价值</th>
-                                        <th className="px-6 py-4">搬迁概率</th>
-                                        <th className="px-6 py-4">AI 匹配建议</th>
-                                        <th className="px-6 py-4 text-right">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {investmentTargets.map((target) => (
-                                        <tr key={target.id} className="hover:bg-slate-50/50 transition-colors group">
-                                            <td className="px-6 py-4">
-                                                <div className="font-bold text-slate-800 mb-0.5">{target.name}</div>
-                                                <div className="text-xs text-slate-400">{target.stage}</div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-md text-xs font-semibold whitespace-nowrap">
-                                                    {target.direction}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 font-medium">
-                                                <span className={target.value.includes('极高') ? 'text-red-500' : 'text-slate-700'}>{target.value}</span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h - full ${parseInt(target.probability) > 70 ? 'bg-green-500' : 'bg-blue-500'} `}
-                                                            style={{ width: target.probability }}
-                                                        />
-                                                    </div>
-                                                    <span className="text-xs font-bold">{target.probability}</span>
+                            {stats.investmentTargets.map((target) => (
+                                <div key={target.id} className="bg-white rounded-xl border border-adaptive-border shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
+                                    {/* Card Header */}
+                                    <div className="p-5 border-b border-adaptive-border bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <div>
+                                            <h4 className="text-xl font-bold text-slate-800 group-hover:text-brand-tech transition-colors">{target.name}</h4>
+                                        </div>
+                                        <div className="flex items-center gap-2 bg-brand-tech/10 text-brand-deep px-3 py-1.5 rounded-full font-bold text-sm">
+                                            <Zap className="w-4 h-4" />
+                                            匹配度：{target.matchScore}
+                                        </div>
+                                    </div>
+
+                                    {/* Card Body */}
+                                    <div className="p-5 grid grid-cols-1 md:grid-cols-12 gap-6">
+                                        {/* Basic Info */}
+                                        <div className="md:col-span-4 space-y-4">
+                                            <div className="flex items-start gap-3">
+                                                <Briefcase className="w-5 h-5 text-slate-400 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-medium mb-1">行业</p>
+                                                    <p className="text-sm font-semibold text-slate-700">{target.industry}</p>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <p className="text-xs leading-relaxed max-w-[200px] text-slate-500 line-clamp-2" title={target.reason}>
-                                                    {target.reason}
-                                                </p>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button className="px-3 py-1.5 bg-white border border-slate-200 text-brand-tech text-xs font-bold rounded shadow-sm hover:bg-slate-50 transition-colors mr-2">
-                                                    查看策略
-                                                </button>
-                                                <button className="px-3 py-1.5 bg-brand-tech text-white text-xs font-bold rounded shadow-sm hover:bg-brand-deep transition-colors">
-                                                    发送邀请
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <TrendingUp className="w-5 h-5 text-slate-400 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-medium mb-1">规模</p>
+                                                    <p className="text-sm font-semibold text-slate-700">{target.size}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <MapPin className="w-5 h-5 text-slate-400 mt-0.5 shrink-0" />
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-medium mb-1">现址</p>
+                                                    <p className="text-sm font-semibold text-slate-700">{target.location}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Values & Strategy */}
+                                        <div className="md:col-span-8 flex flex-col sm:flex-row gap-6 bg-slate-50/50 rounded-lg p-5 border border-slate-100">
+                                            {/* Value Points */}
+                                            <div className="flex-1 space-y-3">
+                                                <h5 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-3">
+                                                    <Target className="w-4 h-4 text-brand-tech" />
+                                                    招引价值
+                                                </h5>
+                                                <ul className="space-y-2.5">
+                                                    {target.valuePoints?.map((vp, idx) => (
+                                                        <li key={idx} className="flex items-start gap-2">
+                                                            <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${vp.type === 'high' ? 'text-green-500' : 'text-blue-400'} `} />
+                                                            <span className="text-sm text-slate-600 leading-relaxed font-medium">
+                                                                {vp.text}
+                                                            </span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+
+                                            {/* Strategy */}
+                                            <div className="flex-1 space-y-3 pt-4 sm:pt-0 sm:border-l border-slate-200 sm:pl-6">
+                                                <h5 className="text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-3">
+                                                    <FileText className="w-4 h-4 text-brand-tech" />
+                                                    招引策略建议
+                                                </h5>
+                                                <ul className="space-y-2 text-sm text-slate-600">
+                                                    {target.strategy?.map((s, idx) => (
+                                                        <li key={idx} className="flex items-start gap-2 relative pl-3">
+                                                            <div className="absolute left-0 top-2 w-1.5 h-1.5 rounded-full bg-brand-tech/60"></div>
+                                                            <span className="leading-relaxed font-medium">{s}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Card Footer Actions */}
+                                    <div className="px-5 py-4 bg-slate-50/80 border-t border-adaptive-border flex justify-end gap-3 flex-wrap">
+                                        <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg shadow-sm hover:bg-slate-50 hover:text-brand-tech transition-colors">
+                                            查看详情
+                                        </button>
+                                        <button className="px-4 py-2 bg-brand-tech text-white text-sm font-bold rounded-lg shadow-sm hover:bg-brand-deep transition-colors flex items-center gap-2">
+                                            生成招商方案
+                                            <ArrowRight className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
@@ -344,7 +431,7 @@ export default function ParkSpacePage() {
                                 </div>
                                 <div className="h-[300px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <AreaChart data={stats.trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                                                     <stop offset="5%" stopColor="#3182ce" stopOpacity={0.3} />

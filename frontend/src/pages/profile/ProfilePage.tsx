@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     UserCircle2,
     Save,
@@ -15,15 +15,18 @@ import {
     ResponsiveContainer
 } from 'recharts';
 
-// Import our new role-specific form components
 import EnterpriseProfileForm from './components/EnterpriseProfileForm';
 import TalentProfileForm from './components/TalentProfileForm';
 import ParkProfileForm from './components/ParkProfileForm';
+import { ProfileService } from '../../services/profileService';
+import type { ProfileData } from '../../types/profile';
 
 export default function ProfilePage() {
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [previewRole, setPreviewRole] = useState<'talent' | 'enterprise' | 'park'>('enterprise');
+    const [profileData, setProfileData] = useState<ProfileData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const handleSave = () => {
         setIsSaving(true);
@@ -34,29 +37,34 @@ export default function ProfilePage() {
         }, 800);
     };
 
-    // Dynamically adjust radar data based on previewRole
-    const radarData = previewRole === 'park' ? [
-        { subject: '园区规模', A: 90, fullMark: 100 },
-        { subject: '入驻密度', A: 85, fullMark: 100 },
-        { subject: 'OPC服务', A: 65, fullMark: 100 },
-        { subject: '政策优势', A: 95, fullMark: 100 },
-        { subject: '产业聚集', A: 80, fullMark: 100 },
-        { subject: '算力基建', A: 75, fullMark: 100 },
-    ] : previewRole === 'talent' ? [
-        { subject: '学历背景', A: 95, fullMark: 100 },
-        { subject: '项目经验', A: 85, fullMark: 100 },
-        { subject: '科研产出', A: 90, fullMark: 100 },
-        { subject: '资质荣誉', A: 75, fullMark: 100 },
-        { subject: 'OPC潜力', A: 88, fullMark: 100 },
-        { subject: '技术稀缺度', A: 80, fullMark: 100 },
-    ] : [
-        { subject: '企业规模', A: 85, fullMark: 100 },
-        { subject: '创新能力', A: 90, fullMark: 100 },
-        { subject: '知识产权', A: 65, fullMark: 100 },
-        { subject: '合规程度', A: 95, fullMark: 100 },
-        { subject: '人才结构', A: 70, fullMark: 100 },
-        { subject: '财务健康', A: 80, fullMark: 100 },
-    ];
+    useEffect(() => {
+        const fetchProfile = async () => {
+            setIsLoading(true);
+            try {
+                const data = await ProfileService.getProfile(previewRole);
+                setProfileData(data);
+            } catch (err) {
+                console.error("Failed to load profile", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, [previewRole]);
+
+    if (isLoading || !profileData) {
+        return (
+            <div className="w-full max-w-7xl mx-auto space-y-6 animate-pulse relative pb-10 p-8">
+                <div className="h-16 bg-slate-100 rounded-lg mb-8"></div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-1 h-80 bg-slate-100 rounded-xl"></div>
+                    <div className="lg:col-span-2 h-80 bg-slate-100 rounded-xl"></div>
+                </div>
+                <div className="h-[600px] bg-slate-100 rounded-xl mt-6"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full max-w-7xl mx-auto space-y-6 animate-fade-in relative pb-10">
@@ -97,7 +105,7 @@ export default function ProfilePage() {
                     <div className="flex flex-col items-end">
                         <span className="text-xs text-adaptive-text-muted mb-1">画像完整度</span>
                         <div className="w-32 h-2.5 bg-adaptive-border rounded-full overflow-hidden">
-                            <div className={`h-full bg-brand-tech rounded-full shadow-[0_0_10px_rgba(49,130,206,0.6)] ${previewRole === 'talent' ? 'w-[65%]' : previewRole === 'park' ? 'w-[90%]' : 'w-[75%]'}`}></div>
+                            <div className={`h-full bg-brand-tech rounded-full shadow-[0_0_10px_rgba(49,130,206,0.6)]`} style={{ width: `${profileData.completionRate}%` }}></div>
                         </div>
                     </div>
                     <button
@@ -131,7 +139,7 @@ export default function ProfilePage() {
 
                     <div className="w-full h-[240px] relative -ml-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={profileData.radarData}>
                                 <PolarGrid stroke="#e2e8f0" />
                                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 11, fontWeight: 600 }} />
                                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
@@ -155,92 +163,45 @@ export default function ProfilePage() {
                 <div className="lg:col-span-2 bg-gradient-to-br from-brand-deep to-[#2c5282] rounded-xl shadow-md p-6 text-white relative overflow-hidden flex flex-col justify-between transition-all duration-300">
                     <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-brand-tech/30 rounded-full blur-3xl"></div>
 
-                    {previewRole === 'enterprise' && (
-                        <>
-                            <div>
-                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                    <AlertCircle className="w-5 h-5 text-warning" />
-                                    画像待补全提示
-                                </h3>
-                                <p className="text-blue-100 text-sm mb-4 leading-relaxed">
-                                    系统检测到您当前有 <strong className="text-warning text-base mx-1">2项</strong> 关键财务指标尚未填写，这直接导致【省专精特新】等 4 项政策的智能匹配精准度下降。
-                                </p>
-                            </div>
+                    <div>
+                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                            {profileData.role === 'enterprise' ? <AlertCircle className="w-5 h-5 text-warning" /> :
+                                profileData.role === 'talent' ? <AlertCircle className="w-5 h-5 text-brand-orange" /> :
+                                    <CheckCircle2 className="w-5 h-5 text-success" />}
+                            {profileData.alert.title}
+                        </h3>
+                        {profileData.role === 'enterprise' && profileData.alert.missingCount ? (
+                            <p className="text-blue-100 text-sm mb-4 leading-relaxed">
+                                系统检测到您当前有 <strong className="text-warning text-base mx-1">{profileData.alert.missingCount}项</strong> 关键财务指标尚未填写，这直接导致【省专精特新】等 4 项政策的智能匹配精准度下降。
+                            </p>
+                        ) : (
+                            <p className="text-blue-100 text-sm mb-4 leading-relaxed">
+                                {profileData.alert.description}
+                            </p>
+                        )}
+                    </div>
 
-                            <div className="space-y-3 relative z-10 w-full md:w-3/4">
-                                <div className="bg-white/10 border border-white/20 rounded-lg p-3 flex justify-between items-center backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer group">
-                                    <span className="text-sm font-medium">更新 2025 年度累计营收预估</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-white/70">缺失关键指标</span>
-                                        <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-brand-tech transition-colors">
-                                            <span className="text-xs">+</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="bg-white/10 border border-white/20 rounded-lg p-3 flex justify-between items-center backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer group">
-                                    <span className="text-sm font-medium">补充近期新增的大模型备案号</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-brand-tech bg-white px-2 py-0.5 rounded-full font-bold">加分项</span>
-                                        <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-brand-tech transition-colors">
-                                            <span className="text-xs">+</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    {previewRole === 'talent' && (
-                        <>
-                            <div>
-                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                    <AlertCircle className="w-5 h-5 text-brand-orange" />
-                                    OPC 创业者专属推荐
-                                </h3>
-                                <p className="text-blue-100 text-sm mb-4 leading-relaxed">
-                                    您已标记为 <strong className="text-white bg-white/20 px-1 rounded mx-1">OPC 超级个体</strong>。请补充算力需求，系统将为您精准匹配【算力券补贴】及【免租工位】。
-                                </p>
-                            </div>
-
-                            <div className="space-y-3 relative z-10 w-full md:w-3/4">
-                                <div className="bg-white/10 border border-brand-orange/40 rounded-lg p-3 flex justify-between items-center backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer group">
-                                    <span className="text-sm font-medium">完善所需模型参数及算力级别</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-brand-orange bg-white px-2 py-0.5 rounded-full font-bold">解锁算力补贴</span>
-                                        <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-brand-tech transition-colors">
-                                            <span className="text-xs">+</span>
-                                        </div>
+                    <div className="space-y-3 relative z-10 w-full md:w-3/4">
+                        {profileData.alert.tips.map(tip => (
+                            <div key={tip.id} className={`bg-white/10 border ${tip.type === 'warning' ? 'border-warning/50' :
+                                tip.type === 'bonus' ? 'border-white/20' :
+                                    tip.type === 'success' ? 'border-success/40' :
+                                        'border-brand-orange/40'
+                                } rounded-lg p-3 flex justify-between items-center backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer group`}>
+                                <span className="text-sm font-medium">{tip.content}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${tip.type === 'bonus' ? 'text-brand-tech bg-white' :
+                                        tip.type === 'success' ? 'text-success bg-white' :
+                                            tip.type === 'warning' ? 'text-white/70 bg-transparent px-0' :
+                                                'text-brand-orange bg-white'
+                                        }`}>{tip.actionLabel}</span>
+                                    <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-brand-tech transition-colors">
+                                        <span className="text-xs">+</span>
                                     </div>
                                 </div>
                             </div>
-                        </>
-                    )}
-
-                    {previewRole === 'park' && (
-                        <>
-                            <div>
-                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                    <CheckCircle2 className="w-5 h-5 text-success" />
-                                    园区画像健康度良好
-                                </h3>
-                                <p className="text-blue-100 text-sm mb-4 leading-relaxed">
-                                    当前园区信息已基本完善。建议进一步细化<strong className="text-white bg-white/20 px-1 rounded mx-1">补链/强链需求</strong>，以提升智能招商推荐的转化率。
-                                </p>
-                            </div>
-
-                            <div className="space-y-3 relative z-10 w-full md:w-3/4">
-                                <div className="bg-white/10 border border-success/40 rounded-lg p-3 flex justify-between items-center backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer group">
-                                    <span className="text-sm font-medium">明确目标招商企业的年营收集群</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-success bg-white px-2 py-0.5 rounded-full font-bold">提升招商精度</span>
-                                        <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-brand-tech transition-colors">
-                                            <span className="text-xs">+</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
+                        ))}
+                    </div>
                 </div>
             </div>
 

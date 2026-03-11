@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Target,
     AlertCircle,
@@ -9,94 +10,32 @@ import {
     MapPin,
     Tag,
 
-    Eye,
-    Plus
+    Eye
 } from 'lucide-react';
 
-// Data types based on PRD
-interface Blocker {
-    type: 'qualification' | 'data' | 'opc';
-    message: string;
-    gap?: string;
-    isLogicLock?: boolean; // PRD: 一票否决机制
-}
-
-interface MatchPolicy {
-    id: string;
-    title: string;
-    agency: string;
-    tags: string[];
-    amount: string;
-    matchScore: number;
-    matchText: string;
-    statusColor: string;
-    matchReason?: string;
-    blockers?: Blocker[];
-    isOpcExclusive?: boolean;
-}
-
-const policiesData: MatchPolicy[] = [
-    {
-        id: 'p1',
-        title: '人工智能算力平台专项补贴',
-        agency: '苏州市工信局',
-        tags: ['算力补贴', 'OPC先行'],
-        amount: '最高 50 万',
-        matchScore: 100,
-        matchText: '完全匹配',
-        statusColor: '#38a169',
-        matchReason: '企业算力需求与平台补贴政策高度吻合，可补充园区AI算力设计空白，可与园区40家AI应用企业形成算力供需关系，完善"芯片-算法-应用"全链条',
-        isOpcExclusive: true
-    },
-    {
-        id: 'p2',
-        title: '企业研发机构与创新平台奖励',
-        agency: '江苏省科技厅',
-        tags: ['研发资金', '省级专项'],
-        amount: '30 - 100 万',
-        matchScore: 85,
-        matchText: '高度匹配',
-        statusColor: '#3182ce',
-        matchReason: '企业研发投入符合省级创新平台奖励标准，大模型是AI产业发展趋势，可带动园区算法层和应用层企业整体升级',
-        blockers: [
-            { type: 'qualification', message: '需拥有的总知识产权数量不足', gap: '目标至少 5 项，当前仅有 3 项 (含软著/专利)' }
-        ]
-    },
-    {
-        id: 'p3',
-        title: '高新技术企业培育资金',
-        agency: '苏州市科技局',
-        tags: ['资质认定', '一票否决'],
-        amount: '20 万',
-        matchScore: 49,
-        matchText: '逻辑锁降级',
-        statusColor: '#ed8936',
-        matchReason: '高新技术企业认定是获取后续更多扶持政策的前置条件，建议优先完成入库',
-        blockers: [
-            { type: 'qualification', message: '前置身份缺失', gap: '必须先完成《科技型中小企业入库》，当前状态为未入库', isLogicLock: true }
-        ]
-    },
-    {
-        id: 'p4',
-        title: 'OPC 开发者生态联合入驻扶持',
-        agency: '苏州工业园区管委会',
-        tags: ['OPC专属', '场地资金'],
-        amount: '免租 2 年 + 启动金',
-        matchScore: 45,
-        matchText: '需前置动作',
-        statusColor: '#718096',
-        matchReason: '园区生态政策要求企业注册地在OPC生态社区内，入驻后可享受免租及启动金等一揽子扶持',
-        isOpcExclusive: true,
-        blockers: [
-            { type: 'opc', message: '尚未入驻任何官方认证的 OPC 社区', gap: '政策要求企业注册地必须在 OPC 生态社区内', isLogicLock: true }
-        ]
-    }
-];
+import { PolicyService } from '../../services/policyService';
+import type { MatchPolicy } from '../../types/policy';
 
 export default function MatchingPage() {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'all' | '100' | 'opc'>('all');
+    const [policiesData, setPoliciesData] = useState<MatchPolicy[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const filteredPolicies = policiesData.filter(p => {
+    useEffect(() => {
+        const fetchPolicies = async () => {
+            try {
+                const data = await PolicyService.getMatchedPolicies();
+                setPoliciesData(data);
+            } catch (error) {
+                console.error("Failed to fetch policies:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchPolicies();
+    }, []); const filteredPolicies = policiesData.filter(p => {
         if (activeTab === '100') return p.matchScore === 100;
         if (activeTab === 'opc') return p.isOpcExclusive;
         return true;
@@ -236,7 +175,7 @@ export default function MatchingPage() {
                                 {/* Row 4: Blockers (if any) */}
                                 {policy.blockers && policy.blockers.length > 0 && (
                                     <div className="space-y-2">
-                                        {policy.blockers.map((blocker, idx) => (
+                                        {policy.blockers.map((blocker: any, idx: number) => (
                                             <div
                                                 key={idx}
                                                 className={`p-3 rounded-lg flex items-start gap-2.5 border text-sm ${blocker.isLogicLock
@@ -266,15 +205,13 @@ export default function MatchingPage() {
 
                             {/* Right Action Buttons Column */}
                             <div className="shrink-0 w-44 border-l border-slate-100 bg-slate-50/50 flex flex-col items-center justify-center p-4 gap-3">
-                                <button className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors duration-200" style={{ backgroundColor: '#2563eb', color: '#ffffff' }}>
+                                <button
+                                    onClick={() => navigate(`/policy/${policy.id}`)}
+                                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors duration-200" style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
+                                >
                                     <Eye className="w-4 h-4" />
-                                    查看详情
+                                    查看政策详情
                                 </button>
-                                <button className="w-full flex items-center justify-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors duration-200">
-                                    <Plus className="w-4 h-4" />
-                                    生成申报材料
-                                </button>
-
                             </div>
                         </div>
                     </div>

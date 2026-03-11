@@ -7,8 +7,10 @@ import DashboardPage from './pages/dashboard/DashboardPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import MatchingPage from './pages/matching/MatchingPage';
 import ApplicationsPage from './pages/applications/ApplicationsPage';
+import MaterialDetailPage from './pages/applications/MaterialDetailPage';
 import MessagesPage from './pages/messages/MessagesPage';
 import CollaborationPage from './pages/collaboration/CollaborationPage';
+import PolicyDetailPage from './pages/policy/PolicyDetailPage';
 import ParkLayout from './layouts/ParkLayout';
 import ParkSpacePage from './pages/park/ParkSpacePage';
 import { useAuth } from './contexts/AuthContext';
@@ -29,7 +31,9 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/policies" element={<MatchingPage />} />
+            <Route path="/policy/:id" element={<PolicyDetailPage />} />
             <Route path="/applications" element={<ApplicationsPage />} />
+            <Route path="/applications/:id/materials" element={<MaterialDetailPage />} />
             <Route path="/messages" element={<MessagesPage />} />
             <Route path="/collaboration" element={<CollaborationPage />} />
             {/* Redirect /park to enterprise dashboard if not park */}

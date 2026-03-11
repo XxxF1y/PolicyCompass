@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Bell,
     FileText,
@@ -8,20 +8,15 @@ import {
     Settings,
     CheckCheck,
     ChevronRight,
-    Circle
+    Circle,
+    ExternalLink,
+    AlertCircle,
+    CheckCircle2,
+    X
 } from 'lucide-react';
 
-// ==================== 类型定义 ====================
-type MessageType = 'policy' | 'match' | 'application' | 'collaboration' | 'system';
-
-interface Message {
-    id: string;
-    type: MessageType;
-    title: string;
-    content: string;
-    time: string;
-    isRead: boolean;
-}
+import type { MessageType, Message } from '../../types/message';
+import { MessageService } from '../../services/messageService';
 
 const typeConfig: Record<MessageType, { label: string; icon: typeof Bell; color: string; bgColor: string }> = {
     policy: { label: '政策提醒', icon: FileText, color: '#3182ce', bgColor: '#ebf8ff' },
@@ -31,94 +26,30 @@ const typeConfig: Record<MessageType, { label: string; icon: typeof Bell; color:
     system: { label: '系统通知', icon: Settings, color: '#718096', bgColor: '#f7fafc' },
 };
 
-// ==================== Mock 数据 ====================
-const messagesData: Message[] = [
-    {
-        id: 'msg1',
-        type: 'policy',
-        title: '新政策发布：苏州市 AI 算力基础设施专项资金',
-        content: '苏州市工信局发布《2026年人工智能算力基础设施建设专项资金申报指南》，申报截止日期为 2026-04-30，预估最高补贴 200 万元。',
-        time: '10 分钟前',
-        isRead: false,
-    },
-    {
-        id: 'msg2',
-        type: 'match',
-        title: '您有 3 项新匹配政策',
-        content: '系统完成最新一轮智能匹配，发现 3 项高度匹配政策（匹配度 ≥ 80%），预估可申请扶持总额约 380 万元。',
-        time: '1 小时前',
-        isRead: false,
-    },
-    {
-        id: 'msg3',
-        type: 'application',
-        title: '「人工智能算力平台专项补贴」预审已完成',
-        content: 'AI 预审评分 92 分，建议优化"技术方案合理性"部分后提交。点击查看详细预审报告。',
-        time: '2 小时前',
-        isRead: false,
-    },
-    {
-        id: 'msg4',
-        type: 'collaboration',
-        title: '芯智科技有限公司邀请您参与联合申报',
-        content: '芯智科技（AI 芯片设计方向）希望与您就"苏州市产业链协同创新项目"进行联合申报，匹配类型为：单线主导型。',
-        time: '3 小时前',
-        isRead: false,
-    },
-    {
-        id: 'msg5',
-        type: 'system',
-        title: '画像完整度提醒：建议补充知识产权信息',
-        content: '您的企业画像完整度为 75%（良好），补充知识产权和 AI 合规信息后可提升至 90% 以上，将解锁更多精准匹配结果。',
-        time: '5 小时前',
-        isRead: true,
-    },
-    {
-        id: 'msg6',
-        type: 'policy',
-        title: '政策窗口期提醒：高新技术企业认定即将截止',
-        content: '2026 年度高新技术企业认定申报将于 2026-03-31 截止，您当前匹配度为 85%，建议尽快补充材料并提交。',
-        time: '昨天',
-        isRead: true,
-    },
-    {
-        id: 'msg7',
-        type: 'application',
-        title: '「苏州市智改数转专项资金」状态更新',
-        content: '您的申报材料已导出并标记为"待前往申报"，请前往官方申报平台提交。预估审核结果时间：2026-05-01。',
-        time: '昨天',
-        isRead: true,
-    },
-    {
-        id: 'msg8',
-        type: 'match',
-        title: 'OPC 专属政策更新',
-        content: '深圳市南山区发布 OPC 创业者专项扶持计划，包含免租 2 年 + 算力券 5 万元 + 模型券 3 万元，您的 OPC 属性已自动匹配。',
-        time: '2 天前',
-        isRead: true,
-    },
-    {
-        id: 'msg9',
-        type: 'system',
-        title: '素材有效期提醒：算法备案证明已过期',
-        content: '您上传的「算法备案证明」已于 2025-11-01 过期，该素材关联 2 项政策申报，请尽快更新。',
-        time: '3 天前',
-        isRead: true,
-    },
-    {
-        id: 'msg10',
-        type: 'collaboration',
-        title: '协同申报匹配推荐',
-        content: '系统识别到深言智能科技（垂直大模型方向）与您存在产业互补关系，可联合申报"江苏省AI产业链协同项目"，预估联合收益增加 40%。',
-        time: '5 天前',
-        isRead: true,
-    },
-];
+
 
 // ==================== 组件 ====================
 export default function MessagesPage() {
     const [activeFilter, setActiveFilter] = useState<MessageType | 'all'>('all');
-    const [messages, setMessages] = useState(messagesData);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+
+    useEffect(() => {
+        const fetchMessages = async () => {
+            setIsLoading(true);
+            try {
+                const data = await MessageService.getMessages();
+                setMessages(data);
+            } catch (err) {
+                console.error("Failed to fetch messages", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchMessages();
+    }, []);
 
     const filteredMessages = activeFilter === 'all'
         ? messages
@@ -178,8 +109,8 @@ export default function MessagesPage() {
                             key={f.key}
                             onClick={() => setActiveFilter(f.key)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${isActive
-                                    ? 'text-white shadow-sm'
-                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                ? 'text-white shadow-sm'
+                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                                 }`}
                             style={isActive ? { backgroundColor: config?.color || '#1e293b' } : {}}
                         >
@@ -195,7 +126,13 @@ export default function MessagesPage() {
 
             {/* Messages List */}
             <div className="space-y-2">
-                {filteredMessages.length === 0 ? (
+                {isLoading ? (
+                    <div className="space-y-4 animate-pulse mt-8">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="h-24 bg-slate-100 rounded-xl w-full border border-slate-200"></div>
+                        ))}
+                    </div>
+                ) : filteredMessages.length === 0 ? (
                     <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
                         <Bell className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                         <p className="text-slate-500 text-sm">暂无此类消息</p>
@@ -209,7 +146,10 @@ export default function MessagesPage() {
                                 key={msg.id}
                                 className={`bg-white rounded-xl border shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${msg.isRead ? 'border-slate-200' : 'border-slate-300'
                                     }`}
-                                onClick={() => markRead(msg.id)}
+                                onClick={() => {
+                                    markRead(msg.id);
+                                    setSelectedMessage(msg);
+                                }}
                             >
                                 <div className="flex items-start p-4 md:p-5 gap-4">
                                     {/* Icon */}
@@ -231,7 +171,58 @@ export default function MessagesPage() {
                                         <h3 className={`text-sm leading-snug mb-1 ${msg.isRead ? 'font-medium text-slate-700' : 'font-bold text-slate-800'}`}>
                                             {msg.title}
                                         </h3>
-                                        <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{msg.content}</p>
+                                        <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+
+                                        {/* Optional Highlight text */}
+                                        {msg.highlightText && (
+                                            <div className={`mt-2 flex items-start gap-1.5 p-2 rounded-lg text-xs font-medium ${msg.highlightStyle === 'success' ? 'bg-green-50 text-green-700' :
+                                                msg.highlightStyle === 'warning' ? 'bg-orange-50 text-orange-700' :
+                                                    msg.highlightStyle === 'error' ? 'bg-red-50 text-red-700' :
+                                                        'bg-blue-50 text-blue-700'
+                                                }`}>
+                                                {msg.highlightStyle === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
+                                                <span>{msg.highlightText}</span>
+                                            </div>
+                                        )}
+
+                                        {/* Optional Incentive text */}
+                                        {msg.incentiveText && (
+                                            <div className="mt-2 text-xs text-blue-600 bg-blue-50/50 p-2 rounded-lg font-medium">
+                                                {msg.incentiveText}
+                                            </div>
+                                        )}
+
+                                        {/* Optional Actions */}
+                                        {msg.actions && msg.actions.length > 0 && (
+                                            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 flex-wrap">
+                                                {msg.actions.map((action, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (action.label === '查看详情') {
+                                                                markRead(msg.id);
+                                                                setSelectedMessage(msg);
+                                                            } else if (action.actionType === 'link' && action.url) {
+                                                                window.open(action.url, '_blank');
+                                                            } else {
+                                                                markRead(msg.id);
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1
+                                                            ${action.actionType === 'primary' ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm' :
+                                                                action.actionType === 'danger' ? 'bg-white border border-red-200 text-red-600 hover:bg-red-50' :
+                                                                    action.actionType === 'link' ? 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50' :
+                                                                        'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                            }
+                                                        `}
+                                                    >
+                                                        {action.label}
+                                                        {action.actionType === 'link' && <ExternalLink className="w-3.5 h-3.5 ml-0.5" />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Arrow */}
@@ -242,6 +233,93 @@ export default function MessagesPage() {
                     })
                 )}
             </div>
+
+            {/* Detail Modal */}
+            {selectedMessage && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedMessage(null)}>
+                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: typeConfig[selectedMessage.type].bgColor }}>
+                                    {(() => {
+                                        const Icon = typeConfig[selectedMessage.type].icon;
+                                        return <Icon className="w-5 h-5" style={{ color: typeConfig[selectedMessage.type].color }} />;
+                                    })()}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-lg leading-tight">消息详情</h3>
+                                    <span className="text-xs text-slate-500">{selectedMessage.time}</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedMessage(null)}
+                                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 overflow-y-auto">
+                            <h2 className="text-base font-bold text-slate-800 mb-4">{selectedMessage.title}</h2>
+                            <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                {selectedMessage.content}
+                            </div>
+
+                            {/* Optional Highlight text */}
+                            {selectedMessage.highlightText && (
+                                <div className={`mt-4 flex items-start gap-2 p-3 rounded-xl text-sm font-medium ${selectedMessage.highlightStyle === 'success' ? 'bg-green-50 text-green-700 border border-green-100' :
+                                    selectedMessage.highlightStyle === 'warning' ? 'bg-orange-50 text-orange-700 border border-orange-100' :
+                                        selectedMessage.highlightStyle === 'error' ? 'bg-red-50 text-red-700 border border-red-100' :
+                                            'bg-blue-50 text-blue-700 border border-blue-100'
+                                    }`}>
+                                    {selectedMessage.highlightStyle === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />}
+                                    <span>{selectedMessage.highlightText}</span>
+                                </div>
+                            )}
+
+                            {/* Optional Incentive text */}
+                            {selectedMessage.incentiveText && (
+                                <div className="mt-4 text-sm text-blue-600 bg-blue-50/50 p-3 rounded-xl font-medium border border-blue-100">
+                                    {selectedMessage.incentiveText}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="p-5 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 flex-wrap">
+                            <button
+                                onClick={() => setSelectedMessage(null)}
+                                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+                            >
+                                关闭
+                            </button>
+                            {selectedMessage.actions && selectedMessage.actions.filter(a => a.label !== '查看详情' && a.label !== '忽略').map((action, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => {
+                                        if (action.actionType === 'link' && action.url) {
+                                            window.open(action.url, '_blank');
+                                        }
+                                        setSelectedMessage(null);
+                                    }}
+                                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 shadow-sm
+                                        ${action.actionType === 'primary' ? 'bg-blue-600 text-white hover:bg-blue-700' :
+                                            action.actionType === 'danger' ? 'bg-red-600 text-white hover:bg-red-700' :
+                                                action.actionType === 'link' ? 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50' :
+                                                    'bg-slate-800 text-white hover:bg-slate-900'
+                                        }
+                                    `}
+                                >
+                                    {action.label}
+                                    {action.actionType === 'link' && <ExternalLink className="w-4 h-4" />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
