@@ -16,7 +16,6 @@ import {
     Building2,
     ShieldCheck,
     Sparkles,
-    ArrowRight,
     RotateCcw,
     Image as ImageIcon,
     ExternalLink,

@@ -32,6 +32,19 @@ export interface InvestmentTarget {
     reason?: string;
 }
 
+export interface PolicyMatch {
+    name: string;
+    matchScore: number;
+    benefit: string;
+}
+
+export interface TargetDetail extends InvestmentTarget {
+    foundedDate?: string;
+    legalPerson?: string;
+    registeredCapital?: string;
+    policyMatches?: PolicyMatch[];
+}
+
 export interface DashboardStats {
     profileCompletion: number;
     openPoliciesCount: number;

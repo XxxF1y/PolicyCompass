@@ -1,4 +1,4 @@
-import { MapPin, Server, Sparkles, Navigation, Link, Activity, Building, Briefcase } from 'lucide-react';
+import { MapPin, Server, Sparkles, Navigation, Link, Building, Briefcase } from 'lucide-react';
 
 export default function ParkProfileForm() {
     return (

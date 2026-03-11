@@ -20,7 +20,6 @@ export default function MatchingPage() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'all' | '100' | 'opc'>('all');
     const [policiesData, setPoliciesData] = useState<MatchPolicy[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchPolicies = async () => {
@@ -29,8 +28,6 @@ export default function MatchingPage() {
                 setPoliciesData(data);
             } catch (error) {
                 console.error("Failed to fetch policies:", error);
-            } finally {
-                setIsLoading(false);
             }
         };
 

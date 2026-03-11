@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-    Users, FileText, PieChart, Upload, Search, Filter,
-    ArrowRight, Building2, Bell, CheckCircle2,
-    Target, Send, Briefcase, Zap, MapPin, TrendingUp, Cpu
-} from 'lucide-react';
+import { Target, Search, Filter, TrendingUp, Building2, MapPin, Briefcase, Users, Cpu, FileText, Upload, Zap, ArrowRight, CheckCircle2, Send, PieChart, Bell } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis,
     CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     BarChart, Bar
 } from 'recharts';
+import ViewDetailsModal from './components/ViewDetailsModal';
+import GenerateProposalModal from './components/GenerateProposalModal';
 
 import { DashboardService } from '../../services/dashboardService';
 import type { ParkStats } from '../../types/dashboard';
@@ -30,6 +28,22 @@ export default function ParkSpacePage() {
 
     const [stats, setStats] = useState<ParkStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Modal States
+    const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
+    const [isProposalOpen, setIsProposalOpen] = useState(false);
+    const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
+
+    const handleViewDetails = (targetId: string) => {
+        setSelectedTargetId(targetId);
+        setIsViewDetailsOpen(true);
+    };
+
+    const handleGenerateProposal = (targetId: string) => {
+        setIsViewDetailsOpen(false); // Close details if open
+        setSelectedTargetId(targetId);
+        setIsProposalOpen(true);
+    };
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -295,10 +309,16 @@ export default function ParkSpacePage() {
 
                                     {/* Card Footer Actions */}
                                     <div className="px-5 py-4 bg-slate-50/80 border-t border-adaptive-border flex justify-end gap-3 flex-wrap">
-                                        <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg shadow-sm hover:bg-slate-50 hover:text-brand-tech transition-colors">
+                                        <button
+                                            onClick={() => handleViewDetails(String(target.id))}
+                                            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg shadow-sm hover:bg-slate-50 hover:text-brand-tech transition-colors"
+                                        >
                                             查看详情
                                         </button>
-                                        <button className="px-4 py-2 bg-brand-tech text-white text-sm font-bold rounded-lg shadow-sm hover:bg-brand-deep transition-colors flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleGenerateProposal(String(target.id))}
+                                            className="px-4 py-2 bg-brand-tech text-white text-sm font-bold rounded-lg shadow-sm hover:bg-brand-deep transition-colors flex items-center gap-2"
+                                        >
                                             生成招商方案
                                             <ArrowRight className="w-4 h-4" />
                                         </button>
@@ -503,6 +523,20 @@ export default function ParkSpacePage() {
                     </div>
                 )}
             </div>
+
+            {/* Modals */}
+            <ViewDetailsModal
+                isOpen={isViewDetailsOpen}
+                onClose={() => setIsViewDetailsOpen(false)}
+                targetId={selectedTargetId}
+                onGenerateProposal={handleGenerateProposal}
+            />
+
+            <GenerateProposalModal
+                isOpen={isProposalOpen}
+                onClose={() => setIsProposalOpen(false)}
+                targetId={selectedTargetId}
+            />
         </div>
     );
 }
