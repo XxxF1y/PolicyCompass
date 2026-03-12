@@ -2,15 +2,61 @@ import { useState } from 'react';
 import { BrainCircuit, ArrowRight, Lock, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { AuthService } from '../../services/authService';
 
 export default function LoginPage() {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { loginWithSession } = useAuth();
     const [loginType, setLoginType] = useState<'password' | 'code'>('password');
+    const [phone, setPhone] = useState('');
+    const [password, setPassword] = useState('');
+    const [code, setCode] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
 
-    const handleLogin = (role: 'enterprise' | 'park') => {
-        login(role);
-        if (role === 'park') {
+    const handlePasswordLogin = async () => {
+        if (!phone.trim() || !password) {
+            setErrorMsg('请输入手机号和密码');
+            return;
+        }
+
+        setErrorMsg('');
+        setIsLoading(true);
+        try {
+            const data = await AuthService.login(phone.trim(), password);
+            const backendRole = data.user.role;
+            const appRole = backendRole === 'park' ? 'park' : 'enterprise';
+
+            loginWithSession({
+                accessToken: data.access_token,
+                user: data.user,
+            });
+
+            if (appRole === 'park') {
+                navigate('/park/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
+        } catch (error: any) {
+            const detail = error?.response?.data?.detail;
+            setErrorMsg(detail || '登录失败，请稍后重试');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDemoLogin = (mode: 'enterprise' | 'park') => {
+        const role = mode === 'park' ? 'park' : 'tech_enterprise';
+        loginWithSession({
+            accessToken: 'demo-token',
+            user: {
+                id: mode === 'park' ? 'demo-park-user' : 'demo-enterprise-user',
+                phone: mode === 'park' ? '13800000002' : '13800000001',
+                role,
+                status: 'active',
+            },
+        });
+        if (mode === 'park') {
             navigate('/park/dashboard');
         } else {
             navigate('/dashboard');
@@ -61,13 +107,15 @@ export default function LoginPage() {
                         </button>
                     </div>
 
-                    <form className="space-y-5">
+                    <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
                         <div className="space-y-1.5">
                             <label className="text-xs font-bold text-adaptive-text-muted uppercase tracking-wider">账号 / 手机号</label>
                             <div className="relative">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-adaptive-text-muted" />
                                 <input
                                     type="text"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
                                     className="w-full bg-adaptive-bg/50 border border-adaptive-border text-adaptive-text rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-brand-tech focus:ring-1 focus:ring-brand-tech transition-all placeholder:text-adaptive-text-muted/50"
                                     placeholder="输入注册手机号"
                                 />
@@ -84,6 +132,8 @@ export default function LoginPage() {
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-adaptive-text-muted" />
                                     <input
                                         type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         className="w-full bg-adaptive-bg/50 border border-adaptive-border text-adaptive-text rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-brand-tech focus:ring-1 focus:ring-brand-tech transition-all placeholder:text-adaptive-text-muted/50"
                                         placeholder="••••••••"
                                     />
@@ -97,6 +147,8 @@ export default function LoginPage() {
                                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-adaptive-text-muted" />
                                         <input
                                             type="text"
+                                            value={code}
+                                            onChange={(e) => setCode(e.target.value)}
                                             className="w-full bg-adaptive-bg/50 border border-adaptive-border text-adaptive-text rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-brand-tech focus:ring-1 focus:ring-brand-tech transition-all placeholder:text-adaptive-text-muted/50"
                                             placeholder="6位数字"
                                         />
@@ -108,24 +160,45 @@ export default function LoginPage() {
                             </div>
                         )}
 
+                        {errorMsg && (
+                            <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                {errorMsg}
+                            </div>
+                        )}
+
                         <div className="flex flex-col gap-3 mt-6">
                             <button
                                 type="button"
-                                onClick={() => handleLogin('enterprise')}
+                                onClick={() => {
+                                    if (loginType === 'code') {
+                                        setErrorMsg('验证码登录暂未接入后端');
+                                        return;
+                                    }
+                                    void handlePasswordLogin();
+                                }}
+                                disabled={isLoading}
                                 className="w-full py-3.5 bg-brand-tech hover:bg-brand-deep text-white rounded-lg font-bold text-base transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group"
                             >
-                                <span>企业 / 人才登录</span>
+                                <span>{isLoading ? '登录中...' : '登录'}</span>
                                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </button>
 
-                            <button
-                                type="button"
-                                onClick={() => handleLogin('park')}
-                                className="w-full py-3.5 bg-white hover:bg-slate-50 text-brand-deep border border-brand-tech/30 rounded-lg font-bold text-base transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 group"
-                            >
-                                <span>园区工作台登录</span>
-                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-brand-tech" />
-                            </button>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handleDemoLogin('enterprise')}
+                                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm transition-all"
+                                >
+                                    演示进入（企业版）
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleDemoLogin('park')}
+                                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm transition-all"
+                                >
+                                    演示进入（园区版）
+                                </button>
+                            </div>
                         </div>
                     </form>
 

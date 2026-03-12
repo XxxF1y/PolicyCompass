@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { X, Sparkles, Download, CheckCircle2, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 

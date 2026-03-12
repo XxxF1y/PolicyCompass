@@ -1,4 +1,5 @@
 import type { GrowthNavigatorData } from '../types/growth';
+import { apiClient } from './apiClient';
 
 const mockGrowthData: GrowthNavigatorData = {
     stages: [
@@ -85,7 +86,14 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const GrowthService = {
     getGrowthNavigatorData: async (): Promise<GrowthNavigatorData> => {
-        await delay(600);
-        return mockGrowthData;
+        try {
+            const response = await apiClient.get<{ success: boolean; data: GrowthNavigatorData; message: string }>(
+                '/api/v1/dashboard/enterprise/growth',
+            );
+            return response.data.data;
+        } catch {
+            await delay(600);
+            return mockGrowthData;
+        }
     }
 };

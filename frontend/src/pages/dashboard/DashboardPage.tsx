@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Clock,
     ChevronRight,
@@ -17,17 +18,23 @@ import {
 import GrowthNavigator from './components/GrowthNavigator';
 
 import { DashboardService } from '../../services/dashboardService';
-import type { DashboardStats } from '../../types/dashboard';
+import type { DashboardStats, DashboardTask } from '../../types/dashboard';
 
 export default function DashboardPage() {
+    const navigate = useNavigate();
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [tasks, setTasks] = useState<DashboardTask[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const data = await DashboardService.getEnterpriseStats();
+                const [data, taskList] = await Promise.all([
+                    DashboardService.getEnterpriseStats(),
+                    DashboardService.getEnterpriseTasks(),
+                ]);
                 setStats(data);
+                setTasks(taskList);
             } catch (err) {
                 console.error("Failed to fetch dashboard stats", err);
             } finally {
@@ -58,7 +65,7 @@ export default function DashboardPage() {
             {/* Greeting & Profile Health */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-adaptive-panel/40 p-6 rounded-2xl border border-adaptive-border">
                 <div className="flex flex-col">
-                    <h1 className="text-2xl font-bold font-heading text-adaptive-text">晚上好，超级个体测试账户</h1>
+                    <h1 className="text-2xl font-bold font-heading text-adaptive-text">晚上好，{stats.displayName || '用户'}</h1>
                     <p className="text-adaptive-text-muted mt-2">您本周有 <span className="text-primary-400 font-medium">{stats.openPoliciesCount}个</span> 高匹配政策即将开放申报。</p>
                 </div>
 
@@ -183,75 +190,32 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
-                        {/* Task Priority 0: Profile */}
-                        <div className="group bg-gradient-to-r from-warning to-transparent bg-opacity-10 dark:from-cta-500/10 dark:to-slate-900/50 rounded-lg p-3 border border-warning border-opacity-30 dark:border-cta-500/30 hover:border-opacity-50 transition-colors cursor-pointer relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-12 h-12 bg-warning opacity-20 dark:bg-cta-500/20 rounded-bl-full pointer-events-none" />
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-warning text-white flex items-center gap-1"><AlertCircle className="w-3 h-3" /> 紧急待办</span>
-                                <span className="text-xs text-warning font-medium">拦截中</span>
-                            </div>
-                            <h4 className="text-sm text-adaptive-text font-bold mb-1 group-hover:text-brand-tech transition-colors">
-                                补充您的 OPC 技术资产与合规属性
-                            </h4>
-                            <p className="text-xs text-adaptive-text-muted mt-2">
-                                有 4 项专精特新/算法政策因前置条件缺失被锁定，建议立即前往【画像中心】完善历史申报材料或手动补全。
-                            </p>
-                            <div className="mt-3 text-xs text-brand-deep dark:text-cta-400 flex items-center font-medium bg-warning bg-opacity-20 dark:bg-cta-500/20 w-fit px-2 py-1 rounded">
-                                立即完善画像解锁额度 <ChevronRight className="w-3 h-3 ml-0.5" />
-                            </div>
-                        </div>
-
-                        {/* Task 1 */}
-                        <div className="group bg-adaptive-panel rounded-lg p-3 border border-adaptive-border hover:border-adaptive-border-light transition-colors cursor-pointer shadow-sm">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary-500/10 text-primary-400">申报中心</span>
-                                <span className="text-xs text-adaptive-text-muted">2小时前更新</span>
-                            </div>
-                            <h4 className="text-sm text-adaptive-text font-medium mb-1 group-hover:text-primary-400 transition-colors">
-                                2026年市级人工智能场景应用补贴（医疗方向）
-                            </h4>
-                            <div className="flex items-center gap-2 text-xs text-adaptive-text-muted">
-                                <div className="w-full bg-adaptive-panel-hover rounded-full h-1.5 flex-1 overflow-hidden">
-                                    <div className="bg-primary-500 h-1.5 rounded-full w-[80%]"></div>
+                        {tasks.map((task) => (
+                            <div key={task.id} className="group bg-adaptive-panel rounded-lg p-3 border border-adaptive-border hover:border-adaptive-border-light transition-colors cursor-pointer shadow-sm">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary-500/10 text-primary-400">{task.category}</span>
+                                    <span className="text-xs text-adaptive-text-muted">{task.updatedAt}</span>
                                 </div>
-                                <span>80%</span>
+                                <h4 className="text-sm text-adaptive-text font-medium mb-1 group-hover:text-primary-400 transition-colors">
+                                    {task.title}
+                                </h4>
+                                <div className="flex items-center gap-2 text-xs text-adaptive-text-muted">
+                                    <div className="w-full bg-adaptive-panel-hover rounded-full h-1.5 flex-1 overflow-hidden">
+                                        <div className="bg-primary-500 h-1.5 rounded-full" style={{ width: `${Math.max(0, Math.min(100, task.progress))}%` }}></div>
+                                    </div>
+                                    <span>{task.progress}%</span>
+                                </div>
+                                <p className="text-xs text-adaptive-text-muted mt-2 flex items-center gap-1 line-clamp-2">
+                                    <FileSignature className="w-3 h-3 text-adaptive-text-muted" /> {task.summary}
+                                </p>
+                                <button
+                                    onClick={() => navigate(task.actionPath)}
+                                    className="mt-2 text-xs text-primary-500 flex items-center font-medium"
+                                >
+                                    {task.actionLabel} <ChevronRight className="w-3 h-3 ml-0.5" />
+                                </button>
                             </div>
-                            <p className="text-xs text-adaptive-text-muted mt-2 flex items-center gap-1">
-                                <FileSignature className="w-3 h-3 text-adaptive-text-muted" /> AI 撰写中，待用户补充财务报表
-                            </p>
-                        </div>
-
-                        {/* Task 2 */}
-                        <div className="group bg-adaptive-panel rounded-lg p-3 border border-adaptive-border hover:border-adaptive-border-light transition-colors cursor-pointer shadow-sm">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400">AI 预审</span>
-                                <span className="text-xs text-adaptive-text-muted">昨天完成</span>
-                            </div>
-                            <h4 className="text-sm text-adaptive-text font-medium mb-1 group-hover:text-primary-400 transition-colors">
-                                科技型中小企业入库登记材料
-                            </h4>
-                            <div className="flex items-center gap-2 mt-2">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                <span className="text-xs text-emerald-400">预审通过：风险指数极低</span>
-                            </div>
-                        </div>
-
-                        {/* Task 3 */}
-                        <div className="group bg-adaptive-panel rounded-lg p-3 border border-adaptive-border hover:border-adaptive-border-light transition-colors cursor-pointer shadow-sm">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-brand-deep text-white">成长规划</span>
-                                <span className="text-xs text-adaptive-text-muted">待办</span>
-                            </div>
-                            <h4 className="text-sm text-adaptive-text font-medium mb-1 group-hover:text-primary-400 transition-colors">
-                                完成 OPC 算力标签补充
-                            </h4>
-                            <p className="text-xs text-adaptive-text-muted line-clamp-2">
-                                您当前画像判定可能符合“超级个体创业券”申领条件，请前往画像中心更新算力日均开销数据以解锁匹配...
-                            </p>
-                            <div className="mt-2 text-xs text-primary-500 flex items-center font-medium">
-                                去完善 <ChevronRight className="w-3 h-3 ml-0.5" />
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </div>

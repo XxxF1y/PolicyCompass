@@ -9,6 +9,7 @@ from app.models.application import Application
 from app.models.message import Message
 from app.models.favorite import Favorite
 from app.models.chat import ChatSession, ChatMessage
+from app.models.growth import GrowthStage, GrowthNode, GrowthConnection, GrowthSummary
 
 __all__ = [
     "User",
@@ -23,4 +24,8 @@ __all__ = [
     "Favorite",
     "ChatSession",
     "ChatMessage",
+    "GrowthStage",
+    "GrowthNode",
+    "GrowthConnection",
+    "GrowthSummary",
 ]

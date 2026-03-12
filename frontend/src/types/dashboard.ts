@@ -46,6 +46,7 @@ export interface TargetDetail extends InvestmentTarget {
 }
 
 export interface DashboardStats {
+    displayName: string;
     profileCompletion: number;
     openPoliciesCount: number;
     estimatedAmount: number;
@@ -62,6 +63,18 @@ export interface DashboardStats {
     matched_enterprises: number;
     generated_materials: number;
     success_rate: string;
+}
+
+export interface DashboardTask {
+    id: string;
+    category: string;
+    title: string;
+    summary: string;
+    status: string;
+    progress: number;
+    updatedAt: string;
+    actionLabel: string;
+    actionPath: string;
 }
 
 export interface ParkStats {

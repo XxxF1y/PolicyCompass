@@ -1,16 +1,32 @@
-from pydantic import BaseModel
+from typing import Literal
+
+from pydantic import BaseModel, field_validator
 
 
 class LoginRequest(BaseModel):
     phone: str
     password: str
 
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        if len(v) != 11 or not v.isdigit():
+            raise ValueError("手机号必须为11位数字")
+        return v
+
 
 class RegisterRequest(BaseModel):
     phone: str
     password: str
-    role: str
+    role: Literal["talent", "tech_enterprise", "transform_enterprise", "park"]
     code: str | None = None
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        if len(v) != 11 or not v.isdigit():
+            raise ValueError("手机号必须为11位数字")
+        return v
 
 
 class UserInfo(BaseModel):

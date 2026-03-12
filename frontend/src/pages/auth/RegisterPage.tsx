@@ -2,28 +2,69 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BrainCircuit, ArrowRight, Lock, User, Briefcase, Building2, TrendingUp, Cpu, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { AuthService, type RegisterRole } from '../../services/authService';
 
 type RoleType = 'talent' | 'enterprise' | 'transform' | 'park' | null;
 
 export default function RegisterPage() {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { loginWithSession } = useAuth();
 
     const [step, setStep] = useState<number>(1);
 
     // Form State
     const [phone, setPhone] = useState('');
     const [verifyCode, setVerifyCode] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [selectedRole, setSelectedRole] = useState<RoleType>(null);
     const [name, setName] = useState('');
     const [isOpc, setIsOpc] = useState<boolean>(false);
+    const [errorMsg, setErrorMsg] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const isValidPhone = (value: string) => /^\d{11}$/.test(value);
+
+    const mapRole = (role: RoleType): RegisterRole | null => {
+        switch (role) {
+            case 'talent':
+                return 'talent';
+            case 'enterprise':
+                return 'tech_enterprise';
+            case 'transform':
+                return 'transform_enterprise';
+            case 'park':
+                return 'park';
+            default:
+                return null;
+        }
+    };
 
     const handleNext = () => {
+        setErrorMsg('');
         if (step === 1) {
-            if (!phone || !verifyCode) return;
+            if (!phone || !verifyCode || !password || !confirmPassword) {
+                setErrorMsg('请完整填写手机号、验证码和密码');
+                return;
+            }
+            if (!isValidPhone(phone)) {
+                setErrorMsg('手机号必须为11位数字');
+                return;
+            }
+            if (password.length < 6) {
+                setErrorMsg('密码至少6位');
+                return;
+            }
+            if (password !== confirmPassword) {
+                setErrorMsg('两次输入的密码不一致');
+                return;
+            }
         }
         if (step === 2) {
-            if (!selectedRole) return;
+            if (!selectedRole) {
+                setErrorMsg('请选择身份');
+                return;
+            }
         }
         setStep(prev => Math.min(prev + 1, 3));
     };
@@ -32,17 +73,49 @@ export default function RegisterPage() {
         setStep(prev => Math.max(prev - 1, 1));
     };
 
-    const handleComplete = () => {
-        // Mock register complete, set auth state and navigate
-        if (!name) return;
+    const handleComplete = async () => {
+        if (!name.trim()) {
+            setErrorMsg('请填写主体名称');
+            return;
+        }
+        if (!isValidPhone(phone)) {
+            setErrorMsg('手机号必须为11位数字');
+            return;
+        }
+        const backendRole = mapRole(selectedRole);
+        if (!backendRole) {
+            setErrorMsg('请选择身份');
+            return;
+        }
 
-        const systemRole = selectedRole === 'park' ? 'park' : 'enterprise';
-        login(systemRole);
-
-        if (systemRole === 'park') {
-            navigate('/park/dashboard');
-        } else {
-            navigate('/dashboard');
+        setErrorMsg('');
+        setIsSubmitting(true);
+        try {
+            await AuthService.register({
+                phone: phone.trim(),
+                password,
+                role: backendRole,
+                code: verifyCode,
+            });
+            const session = await AuthService.login(phone.trim(), password);
+            loginWithSession({
+                accessToken: session.access_token,
+                user: session.user,
+            });
+            if (session.user.role === 'park') {
+                navigate('/park/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
+        } catch (error: any) {
+            const detail = error?.response?.data?.detail;
+            if (Array.isArray(detail) && detail.length > 0) {
+                setErrorMsg(detail[0]?.msg || '注册失败，请稍后重试');
+            } else {
+                setErrorMsg(detail || '注册失败，请稍后重试');
+            }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -94,12 +167,12 @@ export default function RegisterPage() {
                 <div className="bg-white rounded-2xl p-8 shadow-xl border border-adaptive-border relative overflow-hidden transition-all duration-300">
                     <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-brand-tech/30 to-transparent" />
 
-                    {/* STEP 1: Phone Verification */}
+                    {/* STEP 1: Account Setup */}
                     {step === 1 && (
                         <div className="space-y-6 animate-fade-in">
                             <div className="text-center mb-6">
                                 <h2 className="text-xl font-bold text-slate-800">欢迎加入 PolicyCompass</h2>
-                                <p className="text-sm text-slate-500 mt-1">请验证手机号以开启智能向导</p>
+                                <p className="text-sm text-slate-500 mt-1">请先完成账号信息</p>
                             </div>
 
                             <div className="space-y-4 max-w-md mx-auto">
@@ -133,6 +206,34 @@ export default function RegisterPage() {
                                         <button type="button" className="px-4 bg-adaptive-bg hover:bg-adaptive-panel-hover text-brand-deep font-medium text-sm rounded-lg border border-adaptive-border transition-colors whitespace-nowrap">
                                             获取验证码
                                         </button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-adaptive-text-muted uppercase tracking-wider">密码</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-adaptive-text-muted" />
+                                        <input
+                                            type="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            className="w-full bg-adaptive-bg/50 border border-adaptive-border text-adaptive-text rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-brand-tech focus:ring-1 focus:ring-brand-tech transition-all placeholder:text-adaptive-text-muted/50"
+                                            placeholder="至少 6 位"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-adaptive-text-muted uppercase tracking-wider">确认密码</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-adaptive-text-muted" />
+                                        <input
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            className="w-full bg-adaptive-bg/50 border border-adaptive-border text-adaptive-text rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-brand-tech focus:ring-1 focus:ring-brand-tech transition-all placeholder:text-adaptive-text-muted/50"
+                                            placeholder="再次输入密码"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -274,21 +375,27 @@ export default function RegisterPage() {
                         </div>
                     )}
 
+                    {errorMsg && (
+                        <div className="mt-4 text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                            {errorMsg}
+                        </div>
+                    )}
+
                     {/* Bottom Actions */}
                     <div className="mt-8 pt-6 border-t border-adaptive-border-light flex gap-4">
                         {step === 3 ? (
                             <button
                                 onClick={handleComplete}
-                                disabled={!name}
+                                disabled={!name || isSubmitting}
                                 className="w-full py-3.5 bg-brand-tech hover:bg-brand-deep disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg font-bold text-base transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group"
                             >
-                                <span>注册完成，启动引擎</span>
+                                <span>{isSubmitting ? '注册中...' : '注册完成，启动引擎'}</span>
                                 <BrainCircuit className="w-5 h-5 group-hover:scale-110 transition-transform" />
                             </button>
                         ) : (
                             <button
                                 onClick={handleNext}
-                                disabled={step === 1 && (!phone || !verifyCode) || step === 2 && !selectedRole}
+                                disabled={step === 1 && (!phone || !verifyCode || !password || !confirmPassword) || step === 2 && !selectedRole}
                                 className="w-full py-3.5 bg-brand-tech hover:bg-brand-deep disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg font-bold text-base transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group"
                             >
                                 <span>下一步</span>

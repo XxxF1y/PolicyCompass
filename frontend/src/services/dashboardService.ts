@@ -1,6 +1,8 @@
-import type { DashboardStats, ParkStats } from '../types/dashboard';
+import type { DashboardStats, DashboardTask, ParkStats } from '../types/dashboard';
+import { apiClient } from './apiClient';
 
 const mockEnterpriseDashboard: DashboardStats = {
+    displayName: '超级个体测试账户',
     profileCompletion: 30,
     openPoliciesCount: 3,
     estimatedAmount: 15.5,
@@ -25,6 +27,31 @@ const mockEnterpriseDashboard: DashboardStats = {
         { month: '6月', subsidies: 120 }
     ]
 };
+
+const mockDashboardTasks: DashboardTask[] = [
+    {
+        id: 'task-profile',
+        category: '画像中心',
+        title: '补充您的 OPC 技术资产与合规属性',
+        summary: '有 4 项专精特新/算法政策因前置条件缺失被锁定',
+        status: 'blocked',
+        progress: 10,
+        updatedAt: '今天',
+        actionLabel: '去完善',
+        actionPath: '/profile',
+    },
+    {
+        id: 'task-application',
+        category: '申报中心',
+        title: '2026年市级人工智能场景应用补贴（医疗方向）',
+        summary: 'AI 撰写中，待用户补充财务报表',
+        status: 'generating',
+        progress: 80,
+        updatedAt: '2小时前',
+        actionLabel: '查看申报',
+        actionPath: '/applications',
+    },
+];
 
 const mockParkSpaceDashboard: ParkStats = {
     newLeads: 124,
@@ -99,12 +126,32 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const DashboardService = {
     getEnterpriseStats: async (): Promise<DashboardStats> => {
-        await delay(700);
-        return mockEnterpriseDashboard;
+        try {
+            const response = await apiClient.get<{ success: boolean; data: DashboardStats; message: string }>(
+                '/api/v1/dashboard/enterprise/overview',
+            );
+            return response.data.data;
+        } catch {
+            // Keep dashboard usable when backend or token is unavailable during demos.
+            await delay(700);
+            return mockEnterpriseDashboard;
+        }
     },
 
     getParkStats: async (): Promise<ParkStats> => {
         await delay(700);
         return mockParkSpaceDashboard;
-    }
+    },
+
+    getEnterpriseTasks: async (): Promise<DashboardTask[]> => {
+        try {
+            const response = await apiClient.get<{ success: boolean; data: DashboardTask[]; message: string }>(
+                '/api/v1/dashboard/enterprise/tasks',
+            );
+            return response.data.data;
+        } catch {
+            await delay(300);
+            return mockDashboardTasks;
+        }
+    },
 };

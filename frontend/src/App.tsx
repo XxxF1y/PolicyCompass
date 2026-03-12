@@ -26,7 +26,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Enterprise / Talent Routes */}
-        {role !== 'park' && (
+        {role === 'enterprise' && (
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/profile" element={<ProfilePage />} />
@@ -59,9 +59,11 @@ function App() {
 
         {/* Fallback */}
         <Route path="*" element={
-          role === 'park'
-            ? <Navigate to="/park/dashboard" replace />
-            : <Navigate to="/dashboard" replace />
+          role === null
+            ? <Navigate to="/login" replace />
+            : role === 'park'
+              ? <Navigate to="/park/dashboard" replace />
+              : <Navigate to="/dashboard" replace />
         } />
       </Routes>
     </BrowserRouter>

@@ -5,6 +5,7 @@ from app.api.v1 import (
     auth,
     chat,
     collaboration,
+    dashboard,
     enterprises,
     insights,
     matching,
@@ -33,3 +34,4 @@ api_router.include_router(insights.router, prefix="/insights", tags=["产业洞�
 api_router.include_router(chat.router, prefix="/chat", tags=["AI对话"])
 api_router.include_router(messages.router, prefix="/messages", tags=["消息中心"])
 api_router.include_router(stats.router, prefix="/stats", tags=["实时大屏"])
+api_router.include_router(dashboard.router, prefix="/dashboard", tags=["工作台"])
