@@ -8,7 +8,6 @@ import {
     LogOut,
     BrainCircuit,
     AlertCircle,
-    UserCircle2,
     FolderOpen,
     Bell,
     Network
@@ -26,8 +25,7 @@ export default function MainLayout() {
     }, []);
 
     const menuItems = [
-        { path: '/dashboard', label: '工作台总览', icon: LayoutDashboard },
-        { path: '/profile', label: '画像中心', icon: UserCircle2 },
+        { path: '/dashboard', label: '工作台', icon: LayoutDashboard },
         { path: '/policies', label: '政策中心', icon: Library },
         { path: '/applications', label: '申报中心', icon: FolderOpen },
         { path: '/collaboration', label: '产业协同', icon: Network },

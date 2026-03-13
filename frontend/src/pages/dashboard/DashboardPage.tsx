@@ -1,253 +1,407 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Clock,
     ChevronRight,
-    Library,
-    Lock,
     ShieldAlert,
-    CheckCircle2,
-    Target,
     TrendingUp,
-    AlertCircle,
-    FileSignature
+    UserCircle2,
+    FolderOpen,
+    GripVertical,
+    RotateCcw,
 } from 'lucide-react';
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+    Radar,
+    RadarChart,
+    PolarGrid,
+    PolarAngleAxis,
+    PolarRadiusAxis,
+    ResponsiveContainer,
 } from 'recharts';
+import { useAuth } from '../../contexts/AuthContext';
+import { DashboardService } from '../../services/dashboardService';
+import { ProfileService } from '../../services/profileService';
+import { ApplicationService } from '../../services/applicationService';
+import type { DashboardStats, DashboardTask } from '../../types/dashboard';
+import type { ProfileData } from '../../types/profile';
+import type { MaterialItem } from '../../types/application';
 import GrowthNavigator from './components/GrowthNavigator';
 
-import { DashboardService } from '../../services/dashboardService';
-import type { DashboardStats, DashboardTask } from '../../types/dashboard';
+type ProfileRole = 'enterprise' | 'talent' | 'park';
+type WidgetId = 'overview' | 'profile' | 'materials' | 'growth';
+
+const ALL_WIDGETS: WidgetId[] = ['overview', 'profile', 'materials', 'growth'];
+
+const roleTitleMap: Record<ProfileRole, { overview: string; profile: string }> = {
+    enterprise: { overview: '企业概览', profile: '企业画像' },
+    talent: { overview: '人才概览', profile: '人才画像' },
+    park: { overview: '园区概览', profile: '园区画像' },
+};
+
+const mapUserRoleToProfileRole = (userRole: string | null): ProfileRole => {
+    if (userRole === 'talent') return 'talent';
+    if (userRole === 'park') return 'park';
+    return 'enterprise';
+};
 
 export default function DashboardPage() {
     const navigate = useNavigate();
+    const { userRole } = useAuth();
+    const profileRole = mapUserRoleToProfileRole(userRole);
+    const defaultOrder: WidgetId[] = ['overview', 'profile', 'materials', 'growth'];
+
+    const storageKey = `dashboard_layout_${profileRole}_v1`;
+    const [widgetOrder, setWidgetOrder] = useState<WidgetId[]>(() => {
+        try {
+            const cached = localStorage.getItem(storageKey);
+            if (!cached) return defaultOrder;
+            const parsed = JSON.parse(cached) as string[];
+            if (
+                Array.isArray(parsed) &&
+                parsed.length === defaultOrder.length &&
+                parsed.every((id) => ALL_WIDGETS.includes(id as WidgetId))
+            ) {
+                return parsed as WidgetId[];
+            }
+        } catch {
+            // ignore malformed cache
+        }
+        return defaultOrder;
+    });
+    const [draggingWidget, setDraggingWidget] = useState<WidgetId | null>(null);
+
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [tasks, setTasks] = useState<DashboardTask[]>([]);
+    const [profile, setProfile] = useState<ProfileData | null>(null);
+    const [materials, setMaterials] = useState<MaterialItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isProfileCollapsed, setIsProfileCollapsed] = useState(false);
 
     useEffect(() => {
-        const fetchStats = async () => {
+        setWidgetOrder(() => {
             try {
-                const [data, taskList] = await Promise.all([
+                const cached = localStorage.getItem(storageKey);
+                if (!cached) return defaultOrder;
+                const parsed = JSON.parse(cached) as string[];
+                if (
+                    Array.isArray(parsed) &&
+                    parsed.length === defaultOrder.length &&
+                    parsed.every((id) => ALL_WIDGETS.includes(id as WidgetId))
+                ) {
+                    return parsed as WidgetId[];
+                }
+            } catch {
+                // ignore malformed cache
+            }
+            return defaultOrder;
+        });
+    }, [storageKey]);
+
+    useEffect(() => {
+        localStorage.setItem(storageKey, JSON.stringify(widgetOrder));
+    }, [storageKey, widgetOrder]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            try {
+                const [statsData, taskData, profileData, materialsData] = await Promise.all([
                     DashboardService.getEnterpriseStats(),
                     DashboardService.getEnterpriseTasks(),
+                    ProfileService.getProfile(profileRole),
+                    ApplicationService.getMaterials(),
                 ]);
-                setStats(data);
-                setTasks(taskList);
+                setStats(statsData);
+                setTasks(taskData);
+                setProfile(profileData);
+                setMaterials(materialsData);
             } catch (err) {
-                console.error("Failed to fetch dashboard stats", err);
+                console.error('Failed to fetch dashboard data', err);
             } finally {
                 setIsLoading(false);
             }
         };
+        fetchData();
+    }, [profileRole]);
 
-        fetchStats();
-    }, []);
+    const onDropWidget = (targetId: WidgetId) => {
+        if (!draggingWidget || draggingWidget === targetId) {
+            setDraggingWidget(null);
+            return;
+        }
+        const next = [...widgetOrder];
+        const from = next.indexOf(draggingWidget);
+        const to = next.indexOf(targetId);
+        if (from < 0 || to < 0) {
+            setDraggingWidget(null);
+            return;
+        }
+        next.splice(from, 1);
+        next.splice(to, 0, draggingWidget);
+        setWidgetOrder(next);
+        setDraggingWidget(null);
+    };
 
-    if (isLoading || !stats) {
+    const moveWidget = (id: WidgetId, direction: 'up' | 'down') => {
+        const idx = widgetOrder.indexOf(id);
+        if (idx < 0) return;
+        const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (swapIdx < 0 || swapIdx >= widgetOrder.length) return;
+        const next = [...widgetOrder];
+        const [item] = next.splice(idx, 1);
+        next.splice(swapIdx, 0, item);
+        setWidgetOrder(next);
+    };
+
+    const materialSummary = useMemo(() => {
+        const valid = materials.filter((m) => m.status === 'valid').length;
+        const expiring = materials.filter((m) => m.status === 'expiring').length;
+        const expired = materials.filter((m) => m.status === 'expired').length;
+        return { valid, expiring, expired };
+    }, [materials]);
+
+    const renderWidget = (id: WidgetId, body: ReactNode, title: string) => (
+        <section
+            key={id}
+            draggable
+            onDragStart={() => setDraggingWidget(id)}
+            onDragEnd={() => setDraggingWidget(null)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => onDropWidget(id)}
+            className={`glass-card-adaptive p-5 rounded-2xl border ${draggingWidget === id ? 'opacity-70 border-primary-400' : 'border-adaptive-border'}`}
+        >
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-adaptive-text">{title}</h2>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => moveWidget(id, 'up')} className="text-xs px-2 py-1 rounded border border-adaptive-border text-adaptive-text-muted hover:text-adaptive-text">上移</button>
+                    <button onClick={() => moveWidget(id, 'down')} className="text-xs px-2 py-1 rounded border border-adaptive-border text-adaptive-text-muted hover:text-adaptive-text">下移</button>
+                    <span className="text-xs px-2 py-1 rounded border border-adaptive-border text-adaptive-text-muted flex items-center gap-1">
+                        <GripVertical className="w-3.5 h-3.5" /> 拖拽
+                    </span>
+                </div>
+            </div>
+            {body}
+        </section>
+    );
+
+    if (isLoading || !stats || !profile) {
         return (
-            <div className="space-y-6 max-w-7xl mx-auto animate-pulse">
-                <div className="h-28 bg-slate-100 rounded-2xl border border-slate-200"></div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-slate-100 rounded-2xl border border-slate-200"></div>)}
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                    <div className="lg:col-span-2 h-96 bg-slate-100 rounded-2xl border border-slate-200"></div>
-                    <div className="h-96 bg-slate-100 rounded-2xl border border-slate-200"></div>
-                </div>
+            <div className="space-y-4 max-w-7xl mx-auto animate-pulse">
+                {[1, 2, 3, 4].map((i) => <div key={i} className="h-40 bg-slate-100 rounded-2xl border border-slate-200" />)}
             </div>
         );
     }
 
-    return (
-        <div className="space-y-6 max-w-7xl mx-auto">
-            {/* Greeting & Profile Health */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-adaptive-panel/40 p-6 rounded-2xl border border-adaptive-border">
-                <div className="flex flex-col">
-                    <h1 className="text-2xl font-bold font-heading text-adaptive-text">晚上好，{stats.displayName || '用户'}</h1>
-                    <p className="text-adaptive-text-muted mt-2">您本周有 <span className="text-primary-400 font-medium">{stats.openPoliciesCount}个</span> 高匹配政策即将开放申报。</p>
+    const titles = roleTitleMap[profileRole];
+
+    const widgetMap: Record<WidgetId, ReactNode> = {
+        overview: (
+            <div className="space-y-5">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div>
+                        <h1 className="text-2xl font-bold font-heading text-adaptive-text">工作台</h1>
+                        <p className="text-adaptive-text-muted mt-2">
+                            晚上好，{stats.displayName || '用户'}。当前有 <span className="text-primary-400 font-medium">{stats.openPoliciesCount} 个</span> 高匹配政策窗口。
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setWidgetOrder(defaultOrder)}
+                        className="text-xs px-3 py-2 rounded-lg border border-adaptive-border text-adaptive-text-muted hover:text-adaptive-text inline-flex items-center gap-1"
+                    >
+                        <RotateCcw className="w-3.5 h-3.5" /> 恢复默认布局
+                    </button>
                 </div>
 
-                {/* Profile Completion Indicator */}
-                <div className="flex items-center gap-4 bg-adaptive-panel p-4 rounded-xl border border-adaptive-border-light/50 shadow-inner">
-                    <div className="relative w-14 h-14 flex items-center justify-center">
-                        <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-700" />
-                            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray="150" strokeDashoffset={150 - (150 * stats.profileCompletion / 100)} className="text-cta-500" />
-                        </svg>
-                        <span className="absolute text-xs font-bold text-adaptive-text">{stats.profileCompletion}%</span>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div className="p-4 rounded-xl bg-adaptive-panel border border-adaptive-border">
+                        <p className="text-xs text-adaptive-text-muted">预估可申报额度</p>
+                        <p className="text-2xl font-bold text-adaptive-text mt-1">{stats.estimatedAmount}{stats.amountUnit}</p>
                     </div>
+                    <div className="p-4 rounded-xl bg-adaptive-panel border border-adaptive-border">
+                        <p className="text-xs text-adaptive-text-muted">高度匹配政策</p>
+                        <p className="text-2xl font-bold text-adaptive-text mt-1">{stats.highlyMatchedCount} 项</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-adaptive-panel border border-adaptive-border">
+                        <p className="text-xs text-adaptive-text-muted">进行中申报</p>
+                        <p className="text-2xl font-bold text-adaptive-text mt-1">{stats.processingCount} 份</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-adaptive-panel border border-adaptive-border">
+                        <p className="text-xs text-adaptive-text-muted">致命卡点</p>
+                        <p className="text-2xl font-bold text-cta-500 mt-1">{stats.fatalBlockerCount} 个</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="bg-adaptive-panel rounded-xl border border-adaptive-border p-4">
+                        <h3 className="text-sm font-medium text-adaptive-text flex items-center gap-2">
+                            <ShieldAlert className="w-4 h-4 text-cta-500" /> 卡点说明
+                        </h3>
+                        <p className="text-sm text-adaptive-text-muted mt-2">{stats.fatalBlockerReason}</p>
+                    </div>
+                    <div className="bg-adaptive-panel rounded-xl border border-adaptive-border p-4">
+                        <h3 className="text-sm font-medium text-adaptive-text flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-secondary-400" /> 进行中任务
+                        </h3>
+                        <div className="space-y-3 mt-3">
+                            {tasks.slice(0, 3).map((task) => (
+                                <button
+                                    key={task.id}
+                                    onClick={() => navigate(task.actionPath)}
+                                    className="w-full text-left p-3 rounded-lg border border-adaptive-border hover:border-adaptive-border-light bg-adaptive-panel-hover"
+                                >
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs text-adaptive-text-muted">{task.category}</span>
+                                        <span className="text-xs text-adaptive-text-muted">{task.updatedAt}</span>
+                                    </div>
+                                    <p className="text-sm font-medium text-adaptive-text mt-1">{task.title}</p>
+                                    <p className="text-xs text-adaptive-text-muted mt-1 line-clamp-1">{task.summary}</p>
+                                </button>
+                            ))}
+                            {tasks.length === 0 && <p className="text-xs text-adaptive-text-muted">暂无任务</p>}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ),
+        profile: (
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-adaptive-text flex items-center gap-1">画像完整度偏低 <ShieldAlert className="w-4 h-4 text-cta-500" /></p>
-                        <p className="text-xs text-adaptive-text-muted mt-1">存在高失真风险，匹配结果受限</p>
+                        <p className="text-sm text-adaptive-text-muted">画像状态</p>
+                        <p className="text-lg font-semibold text-adaptive-text mt-1">{profile.alert.title}</p>
                     </div>
-                    <button className="ml-2 bg-primary-500 hover:bg-primary-600 text-adaptive-text px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-[0_0_15px_rgba(14,165,233,0.3)]">
-                        去完善
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setIsProfileCollapsed((v) => !v)}
+                            className="text-xs px-3 py-2 rounded-lg border border-adaptive-border text-adaptive-text-muted hover:text-adaptive-text"
+                        >
+                            {isProfileCollapsed ? '展开' : '折叠'}
+                        </button>
+                        <button
+                            onClick={() => navigate('/dashboard/profile-edit')}
+                            className="text-xs px-3 py-2 rounded-lg border border-adaptive-border text-adaptive-text-muted hover:text-adaptive-text"
+                        >
+                            进入完整编辑
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="p-4 rounded-xl border border-adaptive-border bg-adaptive-panel">
+                        <p className="text-xs text-adaptive-text-muted">画像完整度</p>
+                        <p className="text-2xl font-bold text-adaptive-text mt-1">{profile.completionRate}%</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-adaptive-border bg-adaptive-panel">
+                        <p className="text-xs text-adaptive-text-muted">待补项</p>
+                        <p className="text-2xl font-bold text-amber-500 mt-1">{profile.alert.missingCount ?? profile.alert.tips.length}</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-adaptive-border bg-adaptive-panel">
+                        <p className="text-xs text-adaptive-text-muted">画像风险</p>
+                        <p className="text-2xl font-bold mt-1 text-adaptive-text">
+                            {profile.completionRate >= 85 ? '低' : profile.completionRate >= 65 ? '中' : '高'}
+                        </p>
+                    </div>
+                </div>
+
+                {!isProfileCollapsed && (
+                    <div className="p-4 rounded-xl border border-adaptive-border bg-adaptive-panel">
+                        <p className="text-sm font-medium text-adaptive-text flex items-center gap-2">
+                            <UserCircle2 className="w-4 h-4 text-primary-500" />
+                            {profileRole === 'talent' ? '人才竞争力雷达' : profileRole === 'park' ? '园区吸引力雷达' : '企业综合战斗力'}
+                        </p>
+                        <div className="h-[240px] mt-2">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RadarChart cx="50%" cy="50%" outerRadius="72%" data={profile.radarData}>
+                                    <PolarGrid stroke="#334155" />
+                                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748B', fontSize: 11, fontWeight: 600 }} />
+                                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                    <Radar name="指标" dataKey="A" stroke="#0EA5E9" strokeWidth={2} fill="#0EA5E9" fillOpacity={0.2} />
+                                </RadarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                )}
+
+                {!isProfileCollapsed && (
+                    <div className="p-4 rounded-xl border border-adaptive-border bg-adaptive-panel">
+                        <p className="text-sm font-medium text-adaptive-text flex items-center gap-2">
+                            <ShieldAlert className="w-4 h-4 text-cta-500" /> 关键提示
+                        </p>
+                        <p className="text-xs text-adaptive-text-muted mt-1">{profile.alert.description}</p>
+                        <div className="mt-3 space-y-2">
+                            {profile.alert.tips.slice(0, 4).map((tip) => (
+                                <div key={tip.id} className="p-3 rounded-lg border border-adaptive-border bg-adaptive-panel-hover flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="text-sm text-adaptive-text line-clamp-2">{tip.content}</p>
+                                        <span className="text-[11px] text-adaptive-text-muted">{tip.actionLabel}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => navigate('/dashboard/profile-edit')}
+                                        className="text-xs px-2 py-1 rounded border border-adaptive-border text-adaptive-text-muted hover:text-adaptive-text whitespace-nowrap"
+                                    >
+                                        去补充
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        ),
+        materials: (
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="p-4 rounded-xl border border-adaptive-border bg-adaptive-panel">
+                        <p className="text-xs text-adaptive-text-muted">有效素材</p>
+                        <p className="text-2xl font-bold text-adaptive-text mt-1">{materialSummary.valid}</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-adaptive-border bg-adaptive-panel">
+                        <p className="text-xs text-adaptive-text-muted">临期素材</p>
+                        <p className="text-2xl font-bold text-amber-500 mt-1">{materialSummary.expiring}</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-adaptive-border bg-adaptive-panel">
+                        <p className="text-xs text-adaptive-text-muted">过期素材</p>
+                        <p className="text-2xl font-bold text-red-500 mt-1">{materialSummary.expired}</p>
+                    </div>
+                </div>
+                <div className="rounded-xl border border-adaptive-border bg-adaptive-panel p-4">
+                    <p className="text-sm font-medium text-adaptive-text flex items-center gap-2">
+                        <FolderOpen className="w-4 h-4 text-primary-500" /> 最近素材
+                    </p>
+                    <div className="mt-3 space-y-2">
+                        {materials.slice(0, 5).map((m) => (
+                            <div key={m.id} className="flex items-center justify-between text-sm p-2 rounded bg-adaptive-panel-hover">
+                                <span className="text-adaptive-text line-clamp-1">{m.name}</span>
+                                <span className="text-xs text-adaptive-text-muted">{m.uploadDate}</span>
+                            </div>
+                        ))}
+                        {materials.length === 0 && <p className="text-xs text-adaptive-text-muted">暂无素材</p>}
+                    </div>
+                    <button
+                        onClick={() => navigate('/applications')}
+                        className="mt-3 text-xs text-primary-500 hover:text-primary-400 inline-flex items-center gap-1"
+                    >
+                        进入素材库 <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>
-
-            {/* Core Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="glass-card-adaptive p-5 border-l-4 border-l-primary-500 hover:-translate-y-1 transition-transform relative group">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-adaptive-text-muted text-sm font-medium">预估可申报额度</p>
-                        <TrendingUp className="w-4 h-4 text-primary-500" />
-                    </div>
-                    <div className="flex items-baseline gap-2 mb-3">
-                        <h3 className="text-3xl font-bold text-adaptive-text font-heading">{stats.estimatedAmount}</h3>
-                        <span className="text-adaptive-text-muted text-sm">{stats.amountUnit}</span>
-                    </div>
-                    {/* OPC Breakdown Tags */}
-                    <div className="flex gap-2">
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary-500/10 text-primary-400 border border-primary-500/20">含 算力券 {stats.opcComputeCoupon}万</span>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-secondary-500/10 text-secondary-400 border border-secondary-500/20">含 模型券 {stats.opcModelCoupon}万</span>
-                    </div>
-                </div>
-
-                <div className="glass-card-adaptive p-5 hover:-translate-y-1 transition-transform relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-cta-500/10 to-transparent pointer-events-none" />
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-adaptive-text-muted text-sm font-medium">高度匹配政策</p>
-                        <Target className="w-4 h-4 text-cta-400" />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                        <h3 className="text-3xl font-bold text-adaptive-text font-heading">{stats.highlyMatchedCount}</h3>
-                        <span className="text-adaptive-text-muted text-sm">项</span>
-                    </div>
-                    <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-cta-400 bg-cta-500/10 rounded-md px-2 py-1 w-fit border border-cta-500/20">
-                        <Lock className="w-3 h-3" /> {stats.blockedPoliciesCount} 项因卡点被阻断
-                    </div>
-                </div>
-
-                <div className="glass-card-adaptive p-5 hover:-translate-y-1 transition-transform">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-adaptive-text-muted text-sm font-medium">材料预审中</p>
-                        <FileSignature className="w-4 h-4 text-purple-400" />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                        <h3 className="text-3xl font-bold text-adaptive-text font-heading">{stats.processingCount}</h3>
-                        <span className="text-adaptive-text-muted text-sm">份</span>
-                    </div>
-                </div>
-
-                <div className="glass-card-adaptive p-5 relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-cta-500/10 rounded-bl-full pointer-events-none" />
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-adaptive-text-muted text-sm font-medium">致命合规卡点</p>
-                        <AlertCircle className="w-4 h-4 text-cta-500" />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                        <h3 className="text-3xl font-bold text-cta-500 font-heading">{stats.fatalBlockerCount}</h3>
-                        <span className="text-adaptive-text-muted text-sm">待修复</span>
-                    </div>
-                    <p className="text-xs text-adaptive-text-muted mt-2 truncate">{stats.fatalBlockerReason}</p>
-                </div>
+        ),
+        growth: (
+            <div className="space-y-3">
+                <p className="text-sm text-adaptive-text-muted">成长导航仪按当前角色画像与政策路径动态展示。</p>
+                <GrowthNavigator />
             </div>
+        ),
+    };
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Chart Area */}
-                <div className="lg:col-span-2 glass-card-adaptive p-6 flex flex-col">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-lg font-bold text-adaptive-text flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-primary-500" /> 年度补贴预测曲线
-                        </h2>
-                        <select className="bg-adaptive-panel border border-adaptive-border-light text-adaptive-text text-sm rounded-md px-2 py-1 focus:outline-none focus:border-primary-500">
-                            <option>此企业轨迹</option>
-                            <option>行业平均对照</option>
-                        </select>
-                    </div>
-                    <div className="flex-1 min-h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={stats.trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorSubsidies" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#0EA5E9" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
-                                <XAxis dataKey="month" stroke="#475569" tick={{ fill: '#64748B', fontSize: 12 }} axisLine={false} tickLine={false} />
-                                <YAxis stroke="#475569" tick={{ fill: '#64748B', fontSize: 12 }} axisLine={false} tickLine={false} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#0F172A', borderColor: '#1E293B', borderRadius: '8px', color: '#F8FAFC' }}
-                                    itemStyle={{ color: '#0EA5E9' }}
-                                />
-                                <Area type="monotone" dataKey="subsidies" stroke="#0EA5E9" strokeWidth={3} fillOpacity={1} fill="url(#colorSubsidies)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* ToDo / Tasks Flow */}
-                <div className="glass-card-adaptive p-6 flex flex-col">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-lg font-bold text-adaptive-text flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-secondary-400" /> 进行中任务
-                        </h2>
-                        <button className="text-xs text-primary-500 hover:text-primary-400 transition-colors">查看全部</button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
-                        {tasks.map((task) => (
-                            <div key={task.id} className="group bg-adaptive-panel rounded-lg p-3 border border-adaptive-border hover:border-adaptive-border-light transition-colors cursor-pointer shadow-sm">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary-500/10 text-primary-400">{task.category}</span>
-                                    <span className="text-xs text-adaptive-text-muted">{task.updatedAt}</span>
-                                </div>
-                                <h4 className="text-sm text-adaptive-text font-medium mb-1 group-hover:text-primary-400 transition-colors">
-                                    {task.title}
-                                </h4>
-                                <div className="flex items-center gap-2 text-xs text-adaptive-text-muted">
-                                    <div className="w-full bg-adaptive-panel-hover rounded-full h-1.5 flex-1 overflow-hidden">
-                                        <div className="bg-primary-500 h-1.5 rounded-full" style={{ width: `${Math.max(0, Math.min(100, task.progress))}%` }}></div>
-                                    </div>
-                                    <span>{task.progress}%</span>
-                                </div>
-                                <p className="text-xs text-adaptive-text-muted mt-2 flex items-center gap-1 line-clamp-2">
-                                    <FileSignature className="w-3 h-3 text-adaptive-text-muted" /> {task.summary}
-                                </p>
-                                <button
-                                    onClick={() => navigate(task.actionPath)}
-                                    className="mt-2 text-xs text-primary-500 flex items-center font-medium"
-                                >
-                                    {task.actionLabel} <ChevronRight className="w-3 h-3 ml-0.5" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+    return (
+        <div className="space-y-5 max-w-7xl mx-auto">
+            {widgetOrder.map((id) => renderWidget(id, widgetMap[id], id === 'overview' ? titles.overview : id === 'profile' ? titles.profile : id === 'materials' ? '素材库' : '成长导航仪'))}
+            <div className="pt-2 text-xs text-adaptive-text-muted flex items-center gap-2">
+                <TrendingUp className="w-3.5 h-3.5" />
+                工作台支持模块拖拽与前后排序，布局按当前角色本地保存。
             </div>
-
-            {/* Platform Stats Row (Powered by actual API) */}
-            <GrowthNavigator />
-
-            {stats && (
-                <div className="mt-8 pt-8 border-t border-adaptive-border">
-                    <p className="text-adaptive-text-muted text-sm mb-4 font-medium flex items-center gap-2">
-                        <Library className="w-4 h-4 text-slate-600" /> 平台实时动态
-                    </p>
-                    <div className="flex flex-wrap gap-8 text-sm">
-                        <div className="flex items-center gap-2">
-                            <span className="text-adaptive-text-muted">收录有效政策</span>
-                            <span className="text-adaptive-text font-bold font-heading">{stats.total_policies.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-adaptive-text-muted">累计服务企业/人才</span>
-                            <span className="text-adaptive-text font-bold font-heading">{stats.matched_enterprises.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-adaptive-text-muted">已智能生成材料</span>
-                            <span className="text-adaptive-text font-bold font-heading">{stats.generated_materials.toLocaleString()} 份</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-emerald-400">
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span>推荐申报成功率 {stats.success_rate}</span>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

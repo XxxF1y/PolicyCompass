@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     UserCircle2,
     Save,
     TrendingUp,
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    ArrowLeft
 } from 'lucide-react';
 import {
     Radar,
@@ -22,6 +24,7 @@ import { ProfileService } from '../../services/profileService';
 import type { ProfileData } from '../../types/profile';
 
 export default function ProfilePage() {
+    const navigate = useNavigate();
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [previewRole, setPreviewRole] = useState<'talent' | 'enterprise' | 'park'>('enterprise');
@@ -68,6 +71,13 @@ export default function ProfilePage() {
 
     return (
         <div className="w-full max-w-7xl mx-auto space-y-6 animate-fade-in relative pb-10">
+            <div
+                className="flex items-center gap-2 text-adaptive-text-muted hover:text-brand-tech cursor-pointer w-fit transition-colors"
+                onClick={() => navigate('/dashboard')}
+            >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm font-medium">返回</span>
+            </div>
 
             {/* Header with Role Switcher */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-adaptive-border">

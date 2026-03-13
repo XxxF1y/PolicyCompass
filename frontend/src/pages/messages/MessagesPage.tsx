@@ -39,7 +39,7 @@ export default function MessagesPage() {
         const fetchMessages = async () => {
             setIsLoading(true);
             try {
-                const data = await MessageService.getMessages();
+                const data = await MessageService.getMessages({ pageSize: 100 });
                 setMessages(data);
             } catch (err) {
                 console.error("Failed to fetch messages", err);
@@ -57,12 +57,41 @@ export default function MessagesPage() {
 
     const unreadCount = messages.filter(m => !m.isRead).length;
 
-    const markAllRead = () => {
-        setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
+    const markAllRead = async () => {
+        const prev = messages;
+        setMessages(prevMsgs => prevMsgs.map(m => ({ ...m, isRead: true })));
+        try {
+            await MessageService.markAllRead();
+        } catch (err) {
+            console.error("Failed to mark all messages as read", err);
+            setMessages(prev);
+        }
     };
 
-    const markRead = (id: string) => {
+    const markRead = async (id: string) => {
+        const target = messages.find(m => m.id === id);
+        if (!target || target.isRead) return;
         setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true } : m));
+        try {
+            await MessageService.markRead(id);
+        } catch (err) {
+            console.error("Failed to mark message as read", err);
+            setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: false } : m));
+        }
+    };
+
+    const removeMessage = async (id: string) => {
+        const prev = messages;
+        setMessages(prevMsgs => prevMsgs.filter(m => m.id !== id));
+        if (selectedMessage?.id === id) {
+            setSelectedMessage(null);
+        }
+        try {
+            await MessageService.deleteMessage(id);
+        } catch (err) {
+            console.error("Failed to delete message", err);
+            setMessages(prev);
+        }
     };
 
     const filters = [
@@ -90,7 +119,7 @@ export default function MessagesPage() {
                 </div>
                 {unreadCount > 0 && (
                     <button
-                        onClick={markAllRead}
+                        onClick={() => { void markAllRead(); }}
                         className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
                     >
                         <CheckCheck className="w-4 h-4" />
@@ -147,7 +176,7 @@ export default function MessagesPage() {
                                 className={`bg-white rounded-xl border shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${msg.isRead ? 'border-slate-200' : 'border-slate-300'
                                     }`}
                                 onClick={() => {
-                                    markRead(msg.id);
+                                    void markRead(msg.id);
                                     setSelectedMessage(msg);
                                 }}
                             >
@@ -201,12 +230,12 @@ export default function MessagesPage() {
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             if (action.label === '查看详情') {
-                                                                markRead(msg.id);
+                                                                void markRead(msg.id);
                                                                 setSelectedMessage(msg);
                                                             } else if (action.actionType === 'link' && action.url) {
                                                                 window.open(action.url, '_blank');
                                                             } else {
-                                                                markRead(msg.id);
+                                                                void markRead(msg.id);
                                                             }
                                                         }}
                                                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1
@@ -227,6 +256,16 @@ export default function MessagesPage() {
 
                                     {/* Arrow */}
                                     <ChevronRight className="w-4 h-4 text-slate-300 shrink-0 mt-1" />
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            void removeMessage(msg.id);
+                                        }}
+                                        className="p-1.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors mt-1"
+                                        title="删除消息"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
                         );
@@ -294,6 +333,14 @@ export default function MessagesPage() {
                                 className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
                             >
                                 关闭
+                            </button>
+                            <button
+                                onClick={() => {
+                                    void removeMessage(selectedMessage.id);
+                                }}
+                                className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5 shadow-sm bg-white border border-red-200 text-red-600 hover:bg-red-50"
+                            >
+                                删除消息
                             </button>
                             {selectedMessage.actions && selectedMessage.actions.filter(a => a.label !== '查看详情' && a.label !== '忽略').map((action, idx) => (
                                 <button

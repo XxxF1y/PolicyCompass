@@ -29,7 +29,8 @@ function App() {
         {role === 'enterprise' && (
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/dashboard/profile-edit" element={<ProfilePage />} />
+            <Route path="/profile" element={<Navigate to="/dashboard/profile-edit" replace />} />
             <Route path="/policies" element={<MatchingPage />} />
             <Route path="/policy/:id" element={<PolicyDetailPage />} />
             <Route path="/applications" element={<ApplicationsPage />} />
