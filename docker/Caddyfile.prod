@@ -3,11 +3,6 @@
 }
 
 :80 {
-    # 前端路由
-    handle /* {
-        reverse_proxy frontend:80
-    }
-
     # API 路由
     handle /api/* {
         reverse_proxy backend:8000
@@ -16,5 +11,10 @@
     # 健康检查
     handle /health {
         reverse_proxy backend:8000
+    }
+
+    # 前端路由
+    handle {
+        reverse_proxy frontend:80
     }
 }
