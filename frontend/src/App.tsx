@@ -47,16 +47,20 @@ function App() {
         {/* Park Routes */}
         {role === 'park' && (
           <Route element={<ParkLayout />}>
-            <Route path="/park/dashboard" element={<ParkSpacePage />} />
+            <Route path="/park/dashboard" element={<Navigate to="/park/insights" replace />} />
             <Route path="/park/investment" element={<ParkSpacePage />} />
             <Route path="/park/policies" element={<ParkSpacePage />} />
             <Route path="/park/insights" element={<ParkSpacePage />} />
-            {/* Redirect other routes to park dashboard */}
-            <Route path="/dashboard" element={<Navigate to="/park/dashboard" replace />} />
-            <Route path="/profile" element={<Navigate to="/park/dashboard" replace />} />
-            <Route path="/policies" element={<Navigate to="/park/dashboard" replace />} />
-            <Route path="/applications" element={<Navigate to="/park/dashboard" replace />} />
-            <Route path="/collaboration" element={<Navigate to="/park/dashboard" replace />} />
+            <Route path="/park/profile-edit" element={<ProfilePage />} />
+            <Route path="/park/messages" element={<MessagesPage />} />
+            {/* Redirect other routes to park insights */}
+            <Route path="/dashboard" element={<Navigate to="/park/insights" replace />} />
+            <Route path="/dashboard/profile-edit" element={<Navigate to="/park/profile-edit" replace />} />
+            <Route path="/profile" element={<Navigate to="/park/insights" replace />} />
+            <Route path="/policies" element={<Navigate to="/park/insights" replace />} />
+            <Route path="/applications" element={<Navigate to="/park/insights" replace />} />
+            <Route path="/collaboration" element={<Navigate to="/park/insights" replace />} />
+            <Route path="/messages" element={<Navigate to="/park/messages" replace />} />
           </Route>
         )}
 
@@ -65,7 +69,7 @@ function App() {
           role === null
             ? <Navigate to="/login" replace />
             : role === 'park'
-              ? <Navigate to="/park/dashboard" replace />
+              ? <Navigate to="/park/insights" replace />
               : <Navigate to="/dashboard" replace />
         } />
       </Routes>

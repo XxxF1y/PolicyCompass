@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-    LayoutDashboard,
     Search,
     LogOut,
     BrainCircuit,
     AlertCircle,
+    Bell,
     Settings,
     FileText,
     PieChart,
@@ -25,10 +25,10 @@ export default function ParkLayout() {
     }, []);
 
     const menuItems = [
-        { path: '/park/dashboard', label: '园区工作台', icon: LayoutDashboard },
-        { path: '/park/investment', label: '智能招商', icon: Users },
-        { path: '/park/policies', label: '政策发布与推送', icon: FileText },
         { path: '/park/insights', label: '产业洞察', icon: PieChart },
+        { path: '/park/investment', label: '智能招商', icon: Users },
+        { path: '/park/policies', label: '政策推送', icon: FileText },
+        { path: '/park/messages', label: '消息中心', icon: Bell },
     ];
 
     const handleLogout = () => {
@@ -41,7 +41,7 @@ export default function ParkLayout() {
             {/* Sidebar */}
             <aside className="w-64 bg-adaptive-panel border-r border-adaptive-border flex flex-col relative z-20 shadow-2xl">
                 {/* Logo */}
-                <div className="h-16 flex items-center px-6 border-b border-adaptive-border cursor-pointer" onClick={() => navigate('/park/dashboard')}>
+                <div className="h-16 flex items-center px-6 border-b border-adaptive-border cursor-pointer" onClick={() => navigate('/park/insights')}>
                     <BrainCircuit className="w-6 h-6 text-brand-tech mr-3" />
                     <span className="font-heading font-bold text-lg text-adaptive-text tracking-wide">Park<span className="text-brand-tech">Space</span></span>
                 </div>

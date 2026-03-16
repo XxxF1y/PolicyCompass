@@ -10,6 +10,7 @@ from app.models.message import Message
 from app.models.favorite import Favorite
 from app.models.chat import ChatSession, ChatMessage
 from app.models.growth import GrowthStage, GrowthNode, GrowthConnection, GrowthSummary
+from app.models.park_policy_push import ParkPolicyPush, ParkPolicyPushLog
 
 __all__ = [
     "User",
@@ -28,4 +29,6 @@ __all__ = [
     "GrowthNode",
     "GrowthConnection",
     "GrowthSummary",
+    "ParkPolicyPush",
+    "ParkPolicyPushLog",
 ]

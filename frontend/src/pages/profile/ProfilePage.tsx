@@ -22,12 +22,16 @@ import TalentProfileForm from './components/TalentProfileForm';
 import ParkProfileForm from './components/ParkProfileForm';
 import { ProfileService } from '../../services/profileService';
 import type { ProfileData } from '../../types/profile';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProfilePage() {
     const navigate = useNavigate();
+    const { role, userRole } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
-    const [previewRole, setPreviewRole] = useState<'talent' | 'enterprise' | 'park'>('enterprise');
+    const initialPreviewRole: 'talent' | 'enterprise' | 'park' =
+        userRole === 'park' ? 'park' : userRole === 'talent' ? 'talent' : 'enterprise';
+    const [previewRole, setPreviewRole] = useState<'talent' | 'enterprise' | 'park'>(initialPreviewRole);
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState('');
@@ -63,6 +67,33 @@ export default function ProfilePage() {
         return '';
     };
 
+    const validateParkForm = (form: HTMLElement) => {
+        const query = <T extends HTMLElement>(name: string) => form.querySelector(`[name="${name}"]`) as T | null;
+        const getText = (name: string) => {
+            const el = query<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(name);
+            return (el?.value || '').trim();
+        };
+        const getSelectedCount = (name: string) => {
+            const el = query<HTMLSelectElement>(name);
+            if (!el) return 0;
+            if (!el.multiple) return el.value ? 1 : 0;
+            return Array.from(el.selectedOptions).map((o) => o.value).filter(Boolean).length;
+        };
+
+        if (!getText('park_name')) throw new Error('园区名称为必填项');
+        if (!getText('park_address')) throw new Error('园区地址为必填项');
+        if (!getText('operator')) throw new Error('运营主体为必填项');
+        if (getSelectedCount('leading_industries') <= 0) throw new Error('主导产业为必填项');
+        if (!getText('tenant_total')) throw new Error('企业总数为必填项');
+        if (!getText('industry_distribution')) throw new Error('行业分布为必填项');
+
+        const isOpc = getText('is_opc_community') === 'yes';
+        if (isOpc) {
+            if (!getText('opc_community_name')) throw new Error('OPC社区名称为必填项（当为OPC社区时）');
+            if (!getText('opc_city')) throw new Error('OPC社区所在城市为必填项（当为OPC社区时）');
+        }
+    };
+
     const buildPayloadFromForm = (role: 'talent' | 'enterprise' | 'park', form: HTMLElement) => {
         const data = {
             name: '',
@@ -85,9 +116,20 @@ export default function ProfilePage() {
 
             const getValue = () => {
                 if (el instanceof HTMLInputElement && el.type === 'checkbox') return el.checked;
+                if (el instanceof HTMLInputElement && el.dataset.format === 'json-array') {
+                    try {
+                        const parsed = JSON.parse(el.value);
+                        return Array.isArray(parsed) ? parsed : [];
+                    } catch {
+                        return [];
+                    }
+                }
                 if (el instanceof HTMLInputElement && el.type === 'number') {
                     const v = el.value.trim();
                     return v === '' ? null : Number(v);
+                }
+                if (el instanceof HTMLSelectElement && el.multiple) {
+                    return Array.from(el.selectedOptions).map((o) => o.value).filter(Boolean);
                 }
                 return el.value;
             };
@@ -115,10 +157,11 @@ export default function ProfilePage() {
                 } else if (cardTitle.includes('OPC创业与算力需求')) sectionKey = 'opc_info';
             }
             if (role === 'park') {
-                if (cardTitle.includes('园区基础信息')) sectionKey = 'basic_info';
-                else if (cardTitle.includes('现有产业生态')) sectionKey = 'industry_focus';
-                else if (cardTitle.includes('靶向招商计划')) sectionKey = 'investment_needs';
-                else if (cardTitle.includes('OPC超级社区配置')) sectionKey = 'opc_community_info';
+                if (cardTitle.includes('基础信息')) sectionKey = 'basic_info';
+                else if (cardTitle.includes('产业定位')) sectionKey = 'industry_focus';
+                else if (cardTitle.includes('入驻情况')) sectionKey = 'tenant_info';
+                else if (cardTitle.includes('招商需求')) sectionKey = 'investment_needs';
+                else if (cardTitle.includes('OPC社区信息')) sectionKey = 'opc_community_info';
             }
             if (!sectionKey) return;
 
@@ -148,6 +191,7 @@ export default function ProfilePage() {
             const formId = previewRole === 'enterprise' ? 'profile-form-enterprise' : previewRole === 'talent' ? 'profile-form-talent' : 'profile-form-park';
             const form = document.getElementById(formId);
             if (!form) throw new Error('未找到画像表单');
+            if (previewRole === 'park') validateParkForm(form);
 
             const parsed = buildPayloadFromForm(previewRole, form);
             const draft = await ProfileService.getProfileEditor(previewRole);
@@ -182,6 +226,12 @@ export default function ProfilePage() {
     };
 
     useEffect(() => {
+        const nextRole: 'talent' | 'enterprise' | 'park' =
+            userRole === 'park' ? 'park' : userRole === 'talent' ? 'talent' : 'enterprise';
+        setPreviewRole(nextRole);
+    }, [userRole]);
+
+    useEffect(() => {
         const fetchProfile = async () => {
             setIsLoading(true);
             try {
@@ -214,7 +264,7 @@ export default function ProfilePage() {
         <div className="w-full max-w-7xl mx-auto space-y-6 animate-fade-in relative pb-10">
             <div
                 className="flex items-center gap-2 text-adaptive-text-muted hover:text-brand-tech cursor-pointer w-fit transition-colors"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(role === 'park' ? '/park/insights' : '/dashboard')}
             >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="text-sm font-medium">返回</span>
