@@ -12,6 +12,24 @@ from app.schemas.park import ParkResponse, ParkUpdate
 router = APIRouter()
 
 
+def _is_filled(value) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return value.strip() != ""
+    if isinstance(value, dict):
+        return any(_is_filled(v) for v in value.values())
+    if isinstance(value, list):
+        return any(_is_filled(v) for v in value)
+    return True
+
+
+def _calc_park_completeness(park: Park) -> float:
+    jsonb_fields = ["basic_info", "industry_focus", "tenant_info", "investment_needs", "opc_community_info"]
+    filled = sum(1 for f in jsonb_fields if _is_filled(getattr(park, f)))
+    return round(filled / len(jsonb_fields) * 100, 1)
+
+
 @router.get("/mine", response_model=ResponseModel[ParkResponse])
 async def get_my_park(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     result = await db.execute(select(Park).where(Park.user_id == current_user.id))
@@ -45,6 +63,7 @@ async def update_park(
         raise HTTPException(status_code=403, detail="无权限")
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(park, field, value)
+    park.completeness_score = _calc_park_completeness(park)
     await db.commit()
     await db.refresh(park)
     return ResponseModel(data=ParkResponse.model_validate(park))

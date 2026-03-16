@@ -11,6 +11,7 @@ import MaterialDetailPage from './pages/applications/MaterialDetailPage';
 import MessagesPage from './pages/messages/MessagesPage';
 import CollaborationPage from './pages/collaboration/CollaborationPage';
 import PolicyDetailPage from './pages/policy/PolicyDetailPage';
+import PolicyBlockerPage from './pages/policy/PolicyBlockerPage';
 import ParkLayout from './layouts/ParkLayout';
 import ParkSpacePage from './pages/park/ParkSpacePage';
 import { useAuth } from './contexts/AuthContext';
@@ -33,6 +34,7 @@ function App() {
             <Route path="/profile" element={<Navigate to="/dashboard/profile-edit" replace />} />
             <Route path="/policies" element={<MatchingPage />} />
             <Route path="/policy/:id" element={<PolicyDetailPage />} />
+            <Route path="/policy/:id/blockers" element={<PolicyBlockerPage />} />
             <Route path="/applications" element={<ApplicationsPage />} />
             <Route path="/applications/:id/materials" element={<MaterialDetailPage />} />
             <Route path="/messages" element={<MessagesPage />} />

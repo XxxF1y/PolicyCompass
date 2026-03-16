@@ -18,6 +18,32 @@ from app.schemas.material import MaterialUploadResponse
 router = APIRouter()
 
 
+def _is_filled(value) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return value.strip() != ""
+    if isinstance(value, dict):
+        return any(_is_filled(v) for v in value.values())
+    if isinstance(value, list):
+        return any(_is_filled(v) for v in value)
+    return True
+
+
+def _calc_enterprise_completeness(ent: Enterprise) -> float:
+    jsonb_fields = [
+        "basic_info",
+        "operation_data",
+        "certifications",
+        "intellectual_property",
+        "ai_compliance",
+        "general_compliance",
+        "opc_info",
+    ]
+    filled = sum(1 for f in jsonb_fields if _is_filled(getattr(ent, f)))
+    return round(filled / len(jsonb_fields) * 100, 1)
+
+
 @router.get("/mine", response_model=ResponseModel[EnterpriseResponse])
 async def get_my_enterprise(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     result = await db.execute(select(Enterprise).where(Enterprise.user_id == current_user.id))
@@ -51,6 +77,7 @@ async def update_enterprise(
         raise HTTPException(status_code=403, detail="无权限")
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(ent, field, value)
+    ent.completeness_score = _calc_enterprise_completeness(ent)
     await db.commit()
     await db.refresh(ent)
     return ResponseModel(data=EnterpriseResponse.model_validate(ent))
@@ -105,10 +132,7 @@ async def get_completeness(
     if not ent:
         raise HTTPException(status_code=404, detail="企业不存在")
 
-    jsonb_fields = [
-        "basic_info", "operation_data", "certifications", "intellectual_property",
-        "ai_compliance", "general_compliance", "opc_info",
-    ]
-    filled = sum(1 for f in jsonb_fields if getattr(ent, f) is not None)
+    jsonb_fields = ["basic_info", "operation_data", "certifications", "intellectual_property", "ai_compliance", "general_compliance", "opc_info"]
+    filled = sum(1 for f in jsonb_fields if _is_filled(getattr(ent, f)))
     score = round(filled / len(jsonb_fields) * 100, 1)
     return ResponseModel(data={"completeness_score": score, "filled": filled, "total": len(jsonb_fields)})

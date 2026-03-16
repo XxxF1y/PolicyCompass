@@ -81,12 +81,17 @@ export default function PolicyDetailPage() {
         );
     }
 
+    const openBlockerDetails = (focusId?: string) => {
+        const suffix = focusId ? `?focus=${encodeURIComponent(focusId)}` : '';
+        navigate(`/policy/${policy.id}/blockers${suffix}`);
+    };
+
     return (
         <div className="space-y-6 max-w-5xl mx-auto pb-12">
             {/* Top Navigation */}
             <div className="flex items-center gap-2 text-adaptive-text-muted hover:text-brand-tech cursor-pointer w-fit transition-colors" onClick={() => navigate(-1)}>
                 <ChevronLeft className="w-5 h-5" />
-                <span className="text-sm font-medium">返回返回政策列表</span>
+                <span className="text-sm font-medium">返回政策列表</span>
             </div>
 
             {/* 1. Basic Info Header */}
@@ -161,7 +166,16 @@ export default function PolicyDetailPage() {
                                 </h3>
                                 <div className="space-y-2">
                                     {policy.conditions.required.map((cond: any, i: number) => (
-                                        <div key={i} className={`flex items-center justify-between p-3 rounded-lg border ${cond.met ? 'border-green-100 bg-green-50/50' : 'border-red-100 bg-red-50/50'}`}>
+                                        <div
+                                            key={i}
+                                            className={`flex items-center justify-between p-3 rounded-lg border ${cond.met ? 'border-green-100 bg-green-50/50' : 'border-red-100 bg-red-50/50 cursor-pointer hover:bg-red-50/80'}`}
+                                            onClick={() => {
+                                                if (!cond.met) {
+                                                    const detailId = policy.blockerDetails?.[0]?.id || `${i}`;
+                                                    openBlockerDetails(detailId);
+                                                }
+                                            }}
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-2 h-2 rounded-full ${cond.met ? 'bg-green-500' : 'bg-red-500'}`}></div>
                                                 <span className="text-sm font-medium text-slate-700">{cond.text}</span>
@@ -225,6 +239,36 @@ export default function PolicyDetailPage() {
                         </div>
                     </div>
 
+                    {/* 5.1 Required Material Templates */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-adaptive-border p-6">
+                        <h2 className="text-lg font-bold text-brand-deep mb-5">📎 所需材料模板</h2>
+                        <div className="space-y-3">
+                            {(policy.materialTemplates || []).map((m, idx) => (
+                                <div key={m.id} className="p-3 rounded-lg border border-adaptive-border-light bg-slate-50">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs px-2 py-1 rounded bg-white border border-slate-200 text-slate-500">{idx + 1}</span>
+                                            <span className="text-sm font-medium text-slate-800">{m.name}</span>
+                                        </div>
+                                        <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                                            m.status === 'ready'
+                                                ? 'bg-green-100 text-green-700'
+                                                : m.status === 'pending'
+                                                    ? 'bg-amber-100 text-amber-700'
+                                                    : 'bg-red-100 text-red-700'
+                                        }`}>
+                                            {m.status === 'ready' ? '已就绪' : m.status === 'pending' ? '待补充' : '缺失'}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-2 ml-10">{m.sourceOrHint}</p>
+                                </div>
+                            ))}
+                            {(!policy.materialTemplates || policy.materialTemplates.length === 0) && (
+                                <p className="text-sm text-slate-500">暂无材料模板</p>
+                            )}
+                        </div>
+                    </div>
+
                     {/* 6. Core Support Benefits */}
                     <div className="bg-white rounded-2xl shadow-sm border border-adaptive-border p-6">
                         <h2 className="text-lg font-bold text-brand-deep mb-5">支持内容与额度</h2>
@@ -275,7 +319,7 @@ export default function PolicyDetailPage() {
 
                             <div className="space-y-4">
                                 <h3 className="text-xs font-bold text-adaptive-text-muted border-b border-adaptive-border-light pb-2">卡点分析 (待解决的阻碍)</h3>
-                                {policy.blockers.map((blocker: any) => (
+                                {policy.blockers.map((blocker: any, idx: number) => (
                                     <div key={blocker.id} className="space-y-2">
                                         <div className="flex items-start gap-2">
                                             {blocker.type === 'critical' ? (
@@ -283,7 +327,12 @@ export default function PolicyDetailPage() {
                                             ) : (
                                                 <AlertCircle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                                             )}
-                                            <span className="text-xs text-adaptive-text leading-tight">{blocker.text}</span>
+                                            <button
+                                                onClick={() => openBlockerDetails(policy.blockerDetails?.[idx]?.id || `${idx}`)}
+                                                className="text-left text-xs text-adaptive-text leading-tight hover:text-brand-tech transition-colors"
+                                            >
+                                                {blocker.text}
+                                            </button>
                                         </div>
                                         {/* Progress bar if applicable */}
                                         {blocker.target > 1 && (
@@ -297,6 +346,13 @@ export default function PolicyDetailPage() {
                                     </div>
                                 ))}
                             </div>
+
+                            <button
+                                onClick={() => openBlockerDetails()}
+                                className="w-full mt-4 border border-brand-tech text-brand-tech py-2 rounded-lg text-sm font-bold hover:bg-brand-tech/5 transition-colors"
+                            >
+                                查看详细卡点分析
+                            </button>
 
                             <button className="w-full mt-6 bg-brand-tech text-white py-2.5 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(49,130,206,0.4)] hover:shadow-[0_0_20px_rgba(49,130,206,0.6)] focus:outline-none focus:ring-2 focus:ring-brand-tech focus:ring-offset-2 transition-all">
                                 补齐缺失资质 (成长导航)

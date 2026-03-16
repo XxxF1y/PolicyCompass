@@ -26,7 +26,7 @@ export default function MainLayout() {
 
     const menuItems = [
         { path: '/dashboard', label: '工作台', icon: LayoutDashboard },
-        { path: '/policies', label: '政策中心', icon: Library },
+        { path: '/policies', label: '政策广场', icon: Library },
         { path: '/applications', label: '申报中心', icon: FolderOpen },
         { path: '/collaboration', label: '产业协同', icon: Network },
         { path: '/messages', label: '消息中心', icon: Bell },

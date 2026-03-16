@@ -30,14 +30,155 @@ export default function ProfilePage() {
     const [previewRole, setPreviewRole] = useState<'talent' | 'enterprise' | 'park'>('enterprise');
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [errorMsg, setErrorMsg] = useState('');
 
-    const handleSave = () => {
+    const normLabel = (raw: string): string => raw.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+
+    const findCardTitle = (el: HTMLElement, form: HTMLElement): string => {
+        let node: HTMLElement | null = el;
+        while (node && node !== form) {
+            const directH3 = Array.from(node.children).find((c) => c.tagName.toLowerCase() === 'h3') as HTMLElement | undefined;
+            if (directH3) {
+                return normLabel(directH3.innerText || directH3.textContent || '');
+            }
+            node = node.parentElement;
+        }
+        return '';
+    };
+
+    const findFieldLabel = (el: HTMLElement, form: HTMLElement): string => {
+        if (el.tagName.toLowerCase() === 'input' && (el as HTMLInputElement).type === 'checkbox') {
+            const wrap = el.closest('label');
+            if (wrap) return normLabel(wrap.innerText || wrap.textContent || '');
+        }
+        let node: HTMLElement | null = el;
+        while (node && node !== form) {
+            const lbl = Array.from(node.children).find((c) => c.tagName.toLowerCase() === 'label') as HTMLElement | undefined;
+            if (lbl) return normLabel(lbl.innerText || lbl.textContent || '');
+            node = node.parentElement;
+        }
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+            return normLabel(el.placeholder || '');
+        }
+        return '';
+    };
+
+    const buildPayloadFromForm = (role: 'talent' | 'enterprise' | 'park', form: HTMLElement) => {
+        const data = {
+            name: '',
+            secondary: '',
+            sections: {} as Record<string, Record<string, unknown>>,
+        };
+
+        const ensureSection = (key: string) => {
+            if (!data.sections[key]) data.sections[key] = {};
+            return data.sections[key];
+        };
+
+        const controls = form.querySelectorAll('input, select, textarea');
+        controls.forEach((node) => {
+            const el = node as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+            if ((el as HTMLInputElement).type === 'button' || (el as HTMLInputElement).type === 'submit') return;
+            const label = findFieldLabel(el, form);
+            if (!label) return;
+            const cardTitle = findCardTitle(el, form);
+
+            const getValue = () => {
+                if (el instanceof HTMLInputElement && el.type === 'checkbox') return el.checked;
+                if (el instanceof HTMLInputElement && el.type === 'number') {
+                    const v = el.value.trim();
+                    return v === '' ? null : Number(v);
+                }
+                return el.value;
+            };
+
+            if (role === 'enterprise' && label === '企业名称') data.name = String(getValue() ?? '');
+            if (role === 'enterprise' && label === '统一社会信用代码') data.secondary = String(getValue() ?? '');
+            if (role === 'talent' && label === '姓名') data.name = String(getValue() ?? '');
+            if (role === 'park' && label === '园区名称') data.name = String(getValue() ?? '');
+            if (role === 'park' && label === '园区地址') data.secondary = String(getValue() ?? '');
+
+            let sectionKey = '';
+            if (role === 'enterprise') {
+                if (cardTitle.includes('基础架构与行业')) sectionKey = 'basic_info';
+                else if (cardTitle.includes('经营与研发数据')) sectionKey = 'operation_data';
+                else if (cardTitle.includes('通用资质与知识产权')) sectionKey = label.includes('专利') || label.includes('软著') ? 'intellectual_property' : 'certifications';
+                else if (cardTitle.includes('AI专属合规状态')) sectionKey = 'ai_compliance';
+                else if (cardTitle.includes('OPC企业与路线图')) sectionKey = 'opc_info';
+            }
+            if (role === 'talent') {
+                if (cardTitle.includes('基础与教育信息')) sectionKey = label === '姓名' || label === '身份证号' ? 'basic_info' : 'education';
+                else if (cardTitle.includes('职业经历与成果产出')) {
+                    if (label.includes('专利') || label.includes('论文')) sectionKey = 'achievements';
+                    else if (label.includes('人才计划') || label.includes('职称')) sectionKey = 'talent_titles';
+                    else sectionKey = 'work_experience';
+                } else if (cardTitle.includes('OPC创业与算力需求')) sectionKey = 'opc_info';
+            }
+            if (role === 'park') {
+                if (cardTitle.includes('园区基础信息')) sectionKey = 'basic_info';
+                else if (cardTitle.includes('现有产业生态')) sectionKey = 'industry_focus';
+                else if (cardTitle.includes('靶向招商计划')) sectionKey = 'investment_needs';
+                else if (cardTitle.includes('OPC超级社区配置')) sectionKey = 'opc_community_info';
+            }
+            if (!sectionKey) return;
+
+            const section = ensureSection(sectionKey);
+            const key = label;
+            if (el instanceof HTMLInputElement && el.type === 'checkbox') {
+                const arr = (section[key] as string[] | undefined) || [];
+                const text = label;
+                if (el.checked) {
+                    if (!arr.includes(text)) arr.push(text);
+                } else {
+                    const idx = arr.indexOf(text);
+                    if (idx >= 0) arr.splice(idx, 1);
+                }
+                section[key] = arr;
+            } else {
+                section[key] = getValue();
+            }
+        });
+        return data;
+    };
+
+    const handleSave = async () => {
         setIsSaving(true);
-        setTimeout(() => {
+        setErrorMsg('');
+        try {
+            const formId = previewRole === 'enterprise' ? 'profile-form-enterprise' : previewRole === 'talent' ? 'profile-form-talent' : 'profile-form-park';
+            const form = document.getElementById(formId);
+            if (!form) throw new Error('未找到画像表单');
+
+            const parsed = buildPayloadFromForm(previewRole, form);
+            const draft = await ProfileService.getProfileEditor(previewRole);
+            const mergedSections = draft.sections.map((s) => {
+                let existing: Record<string, unknown> = {};
+                try {
+                    existing = JSON.parse(s.value || '{}');
+                } catch {
+                    existing = {};
+                }
+                const patch = parsed.sections[s.key] || {};
+                return { ...s, value: JSON.stringify({ ...existing, ...patch }, null, 2) };
+            });
+
+            await ProfileService.saveProfileEditor({
+                ...draft,
+                name: parsed.name || draft.name,
+                secondaryValue: parsed.secondary || draft.secondaryValue,
+                sections: mergedSections,
+            });
+
+            const latest = await ProfileService.getProfile(previewRole);
+            setProfileData(latest);
             setIsSaving(false);
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 3000);
-        }, 800);
+        } catch (err: any) {
+            setIsSaving(false);
+            const detail = err?.response?.data?.detail || err?.message;
+            setErrorMsg(detail || '保存失败，请稍后重试');
+        }
     };
 
     useEffect(() => {
@@ -137,6 +278,11 @@ export default function ProfilePage() {
             </div>
 
             {/* Top Dashboard: Radar & Quick Stats */}
+            {errorMsg && (
+                <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                    {errorMsg}
+                </div>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {/* Radar Chart Panel */}
@@ -217,15 +363,21 @@ export default function ProfilePage() {
 
             {/* Matrix Forms Container - DYNAMIC RENDERING */}
             <div className={`transition-opacity duration-300 ${previewRole === 'talent' ? 'opacity-100 block' : 'hidden'}`}>
-                <TalentProfileForm />
+                <div id="profile-form-talent">
+                    <TalentProfileForm />
+                </div>
             </div>
 
             <div className={`transition-opacity duration-300 ${previewRole === 'enterprise' ? 'opacity-100 block' : 'hidden'}`}>
-                <EnterpriseProfileForm />
+                <div id="profile-form-enterprise">
+                    <EnterpriseProfileForm />
+                </div>
             </div>
 
             <div className={`transition-opacity duration-300 ${previewRole === 'park' ? 'opacity-100 block' : 'hidden'}`}>
-                <ParkProfileForm />
+                <div id="profile-form-park">
+                    <ParkProfileForm />
+                </div>
             </div>
 
         </div>

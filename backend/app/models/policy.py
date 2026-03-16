@@ -18,6 +18,9 @@ class Policy(Base):
     issuing_authority: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     policy_type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    support_domain: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
+    applicable_target: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
+    department_category: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
 
     classification: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     support_details: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)

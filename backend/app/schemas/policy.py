@@ -9,6 +9,9 @@ class PolicyCreate(BaseModel):
     issuing_authority: str | None = None
     level: str | None = None
     policy_type: str | None = None
+    support_domain: str | None = None
+    applicable_target: str | None = None
+    department_category: str | None = None
     classification: dict | None = None
     support_details: dict | None = None
     conditions: dict | None = None
@@ -30,6 +33,9 @@ class PolicyUpdate(BaseModel):
     title: str | None = None
     level: str | None = None
     policy_type: str | None = None
+    support_domain: str | None = None
+    applicable_target: str | None = None
+    department_category: str | None = None
     classification: dict | None = None
     support_details: dict | None = None
     conditions: dict | None = None
@@ -44,8 +50,13 @@ class PolicyListItem(BaseModel):
     issuing_authority: str | None = None
     level: str | None = None
     policy_type: str | None = None
+    support_domain: str | None = None
+    applicable_target: str | None = None
+    department_category: str | None = None
+    source_type: str
     status: str
     is_opc_policy: bool
+    is_favorited: bool = False
     region: str | None = None
     publish_date: date | None = None
     apply_end_date: date | None = None
@@ -61,7 +72,6 @@ class PolicyResponse(PolicyListItem):
     conditions: dict | None = None
     prerequisites: dict | None = None
     materials_required: dict | None = None
-    source_type: str
     review_status: str
     original_text: str | None = None
     interpretation: str | None = None

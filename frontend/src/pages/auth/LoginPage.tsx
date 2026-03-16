@@ -45,21 +45,28 @@ export default function LoginPage() {
         }
     };
 
-    const handleDemoLogin = (mode: 'enterprise' | 'park') => {
-        const role = mode === 'park' ? 'park' : 'tech_enterprise';
-        loginWithSession({
-            accessToken: 'demo-token',
-            user: {
-                id: mode === 'park' ? 'demo-park-user' : 'demo-enterprise-user',
-                phone: mode === 'park' ? '13800000002' : '13800000001',
-                role,
-                status: 'active',
-            },
-        });
-        if (mode === 'park') {
-            navigate('/park/dashboard');
-        } else {
-            navigate('/dashboard');
+    const handleDemoLogin = async (mode: 'enterprise' | 'park') => {
+        const demoPhone = mode === 'park' ? '13900000101' : '13900000099';
+        const demoPassword = 'Passw0rd!';
+
+        setErrorMsg('');
+        setIsLoading(true);
+        try {
+            const data = await AuthService.login(demoPhone, demoPassword);
+            loginWithSession({
+                accessToken: data.access_token,
+                user: data.user,
+            });
+            if (data.user.role === 'park') {
+                navigate('/park/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
+        } catch (error: any) {
+            const detail = error?.response?.data?.detail;
+            setErrorMsg(detail || '演示登录失败，请确认后端服务可用');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -186,14 +193,14 @@ export default function LoginPage() {
                             <div className="grid grid-cols-2 gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => handleDemoLogin('enterprise')}
+                                    onClick={() => void handleDemoLogin('enterprise')}
                                     className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm transition-all"
                                 >
                                     演示进入（企业版）
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => handleDemoLogin('park')}
+                                    onClick={() => void handleDemoLogin('park')}
                                     className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm transition-all"
                                 >
                                     演示进入（园区版）
