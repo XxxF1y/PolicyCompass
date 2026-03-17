@@ -156,7 +156,7 @@ export default function PolicyDetailPage() {
 
                     {/* 5. Deconstructed Conditions */}
                     <div className="bg-white rounded-2xl shadow-sm border border-adaptive-border p-6 md:p-8">
-                        <h2 className="text-xl font-bold text-brand-deep mb-6">📝 申报条件拆解</h2>
+                        <h2 className="text-xl font-bold text-brand-deep mb-6">申报条件拆解</h2>
 
                         <div className="space-y-6">
                             {/* Required */}
@@ -241,7 +241,7 @@ export default function PolicyDetailPage() {
 
                     {/* 5.1 Required Material Templates */}
                     <div className="bg-white rounded-2xl shadow-sm border border-adaptive-border p-6">
-                        <h2 className="text-lg font-bold text-brand-deep mb-5">📎 所需材料模板</h2>
+                        <h2 className="text-lg font-bold text-brand-deep mb-5">所需材料模板</h2>
                         <div className="space-y-3">
                             {(policy.materialTemplates || []).map((m, idx) => (
                                 <div key={m.id} className="p-3 rounded-lg border border-adaptive-border-light bg-slate-50">
@@ -362,7 +362,7 @@ export default function PolicyDetailPage() {
 
                     {/* 4. Knowledge Graph / Trajectory */}
                     <div className="bg-white rounded-2xl shadow-sm border border-adaptive-border p-6 overflow-hidden">
-                        <h2 className="text-lg font-bold text-brand-deep mb-6">🔗 政策知识图谱</h2>
+                        <h2 className="text-lg font-bold text-brand-deep mb-6">政策知识图谱</h2>
 
                         <div className="space-y-8">
                             {/* Vertical Derivation */}

@@ -285,19 +285,19 @@ export default function ProfilePage() {
                             onClick={() => setPreviewRole('talent')}
                             className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${previewRole === 'talent' ? 'bg-white text-brand-tech shadow-sm' : 'text-adaptive-text-muted hover:text-adaptive-text'}`}
                         >
-                            👨‍💻 人才视角
+                            人才视角
                         </button>
                         <button
                             onClick={() => setPreviewRole('enterprise')}
                             className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${previewRole === 'enterprise' ? 'bg-white text-brand-tech shadow-sm' : 'text-adaptive-text-muted hover:text-adaptive-text'}`}
                         >
-                            🏢 企业视角
+                            企业视角
                         </button>
                         <button
                             onClick={() => setPreviewRole('park')}
                             className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${previewRole === 'park' ? 'bg-white text-brand-tech shadow-sm' : 'text-adaptive-text-muted hover:text-adaptive-text'}`}
                         >
-                            🏭 园区视角
+                            园区视角
                         </button>
                     </div>
                 </div>

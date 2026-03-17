@@ -73,7 +73,7 @@ export default function MaterialDetailPage() {
             {/* Back button */}
             <button
                 onClick={() => navigate('/applications')}
-                className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 transition-colors font-medium -mb-2"
+                className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 transition-colors font-medium mb-2"
             >
                 <ArrowLeft className="w-4 h-4" />
                 返回申报中心
@@ -251,7 +251,7 @@ export default function MaterialDetailPage() {
                             <div>
                                 <div className="text-xs font-bold text-red-600 mb-2 flex items-center gap-1.5">
                                     <AlertCircle className="w-3.5 h-3.5" />
-                                    🔴 错误（需修正）
+                                    错误（需修正）
                                 </div>
                                 <div className="space-y-2">
                                     {data.preReviewReport.errors.map((err, i) => (
@@ -271,7 +271,7 @@ export default function MaterialDetailPage() {
                             <div>
                                 <div className="text-xs font-bold text-amber-600 mb-2 flex items-center gap-1.5">
                                     <AlertTriangle className="w-3.5 h-3.5" />
-                                    🟡 警告（建议优化）
+                                    警告（建议优化）
                                 </div>
                                 <div className="space-y-2">
                                     {data.preReviewReport.warnings.map((warn, i) => (
@@ -288,7 +288,7 @@ export default function MaterialDetailPage() {
                             <div>
                                 <div className="text-xs font-bold text-blue-600 mb-2 flex items-center gap-1.5">
                                     <Lightbulb className="w-3.5 h-3.5" />
-                                    💡 建议（可提升通过率）
+                                    建议（可提升通过率）
                                 </div>
                                 <div className="space-y-2">
                                     {data.preReviewReport.suggestions.map((sug, i) => (
@@ -328,7 +328,7 @@ export default function MaterialDetailPage() {
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-bold text-green-800 flex items-center gap-2">
                                 <CheckCircle2 className="w-5 h-5" />
-                                ✅ 材料已定稿
+                                材料已定稿
                             </h2>
                             {data.finalScore !== undefined && (
                                 <div className="text-right">
@@ -348,7 +348,7 @@ export default function MaterialDetailPage() {
                                 <div className="flex items-center gap-2 text-blue-600">
                                     <ExternalLink className="w-4 h-4" />
                                     <a href={data.redirectUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold underline hover:text-blue-800 transition-colors">
-                                        🔗 {data.redirectLabel || data.redirectUrl}
+                                        {data.redirectLabel || data.redirectUrl}
                                     </a>
                                 </div>
                             </div>

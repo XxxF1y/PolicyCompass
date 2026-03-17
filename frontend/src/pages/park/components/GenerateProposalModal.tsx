@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { X, Sparkles, Download, CheckCircle2, Loader2 } from 'lucide-react';
+import { X, Download, CheckCircle2, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface GenerateProposalModalProps {
@@ -50,11 +50,11 @@ export default function GenerateProposalModal({ isOpen, onClose, targetId }: Gen
 
 | 政策资源类型 | 额度预测 | 发放形式 | 条件要求 |
 | :--- | :--- | :--- | :--- |
-| **🚀 落户奖励资金** | **500万元** | 现金一次付清 | [承诺实缴资本到达标准] |
-| **⚡ 专项算力补贴** | **100万元** | OPC社区算力券 | 限定在公共算力中心使用 |
-| **🏢 研发中心免租** | **首年100%** | 科创板租金减免 | 研发人员占比 > 30% |
+| **落户奖励资金** | **500万元** | 现金一次付清 | [承诺实缴资本到达标准] |
+| **专项算力补贴** | **100万元** | OPC社区算力券 | 限定在公共算力中心使用 |
+| **研发中心免租** | **首年100%** | 科创板租金减免 | 研发人员占比 > 30% |
 
-> **💡 AI 补充建议**：考虑到该公司目前正在积极寻优南方研发中心选址，"高端人才落户通道" 及 "核心管理层配偶就业解决机制" 可能成为一锤定音的非资金要素。
+> **AI 补充建议**：考虑到该公司目前正在积极寻优南方研发中心选址，"高端人才落户通道" 及 "核心管理层配偶就业解决机制" 可能成为一锤定音的非资金要素。
 
 ## 3. 行动路径规划 (How?)
 - **Step 1 (本周)**: 发送正式意向邀请函，附带园区产业白皮书，建议由园区副主任带队拜访交流。
@@ -100,9 +100,7 @@ export default function GenerateProposalModal({ isOpen, onClose, targetId }: Gen
                 {/* Header */}
                 <div className="px-6 py-4 bg-slate-50 border-b border-adaptive-border flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-tech to-brand-deep flex items-center justify-center text-white shadow-sm">
-                            <Sparkles className="w-5 h-5" />
-                        </div>
+                        <img src="/logo-circle.svg" alt="政策罗盘" className="w-10 h-10" />
                         <div>
                             <h2 className="text-lg font-bold text-slate-800">AI 智能方案生成器</h2>
                             <p className="text-xs text-slate-500 font-medium">PolicyCompass Brain v2.0</p>

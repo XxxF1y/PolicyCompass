@@ -5,7 +5,8 @@ import {
 } from 'recharts';
 import {
     ShieldCheck, BrainCircuit, Rocket, CheckCircle2,
-    ArrowRight, Users, Briefcase, Zap
+    ArrowRight, Users, Briefcase, Zap,
+    LayoutDashboard, ClipboardList, FolderOpen, TrendingUp, Bell
 } from 'lucide-react';
 import axios from 'axios';
 export default function HomePage() {
@@ -87,14 +88,14 @@ export default function HomePage() {
                                 <img src="/logo-stacked.png" alt="政策罗盘" className="h-12 w-auto" />
                             </div>
                             {[
-                                { label: '政策匹配', icon: '🎯', active: true },
-                                { label: '申报进度', icon: '📋', active: false },
-                                { label: '材料中心', icon: '📁', active: false },
-                                { label: '成长路径', icon: '🚀', active: false },
-                                { label: '消息中心', icon: '🔔', active: false },
+                                { label: '政策匹配', Icon: LayoutDashboard, active: true },
+                                { label: '申报进度', Icon: ClipboardList, active: false },
+                                { label: '材料中心', Icon: FolderOpen, active: false },
+                                { label: '成长路径', Icon: TrendingUp, active: false },
+                                { label: '消息中心', Icon: Bell, active: false },
                             ].map(item => (
                                 <div key={item.label} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium cursor-default transition-colors ${item.active ? 'bg-primary-50 text-primary-600' : 'text-slate-500 hover:bg-slate-50'}`}>
-                                    <span>{item.icon}</span>
+                                    <item.Icon className="w-3.5 h-3.5" />
                                     <span>{item.label}</span>
                                     {item.active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-500" />}
                                 </div>
@@ -222,24 +223,32 @@ export default function HomePage() {
                 {/* Dark style needs specific bounds to override light layout */}
                 <div className="max-w-7xl mx-auto px-4 relative z-20">
                     <div className="grid lg:grid-cols-2 gap-16 items-center">
-                        <div>
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card-dark mb-6 text-secondary-400 font-medium text-sm border-secondary-400/30">
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <div className="flex flex-col items-start">
+                            <div className="inline-flex items-center gap-2 mb-6 text-secondary-400 font-medium text-sm">
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
                                 <span>平台实时数据大脑计算中</span>
                             </div>
-                            <h2 className="text-3xl md:text-5xl font-bold font-heading mb-6 leading-tight">产业洞察，<br />让数据开口说话</h2>
-                            <p className="text-slate-400 text-lg mb-8 leading-relaxed max-w-lg">
+                            <h2 className="text-3xl md:text-5xl font-bold font-heading mb-6 leading-tight text-left">
+                                产业洞察，<br />让数据开口说话
+                            </h2>
+                            <p className="text-slate-400 text-base mb-10 leading-relaxed text-left w-full">
                                 我们的全链路监控与大数据网络，正在为数以万计的科技企业和 OPC 人才分配最高效的补贴渠道。图表展现的是近三十天核心转化态势。
                             </p>
 
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="glass-card-dark p-6">
-                                    <div className="text-4xl font-bold text-white mb-2 font-heading">{stats?.matched_enterprises ? stats.matched_enterprises.toLocaleString() : '---'} <span className="text-base text-slate-400 font-normal">家</span></div>
-                                    <div className="text-slate-400 font-medium">已获得最优匹配企业</div>
+                            <div className="grid grid-cols-2 gap-6 w-full">
+                                <div className="glass-card-dark pr-6 py-5 pl-0 bg-transparent border-none shadow-none">
+                                    <div className="text-4xl font-bold text-white font-heading leading-none mb-1">
+                                        {stats?.matched_enterprises ? stats.matched_enterprises.toLocaleString() : '---'}
+                                        <span className="text-base text-slate-400 font-normal ml-1">家</span>
+                                    </div>
+                                    <div className="text-slate-400 text-sm font-medium mt-2">已获得最优匹配企业</div>
                                 </div>
-                                <div className="glass-card-dark p-6">
-                                    <div className="text-4xl font-bold text-secondary-400 mb-2 font-heading">{stats?.ai_processing_time_saved_hours ? stats.ai_processing_time_saved_hours.toLocaleString() : '---'} <span className="text-base text-slate-400 font-normal">小时</span></div>
-                                    <div className="text-slate-400 font-medium">AI累计节省材料审批时间</div>
+                                <div className="glass-card-dark pr-6 py-5 pl-0 bg-transparent border-none shadow-none">
+                                    <div className="text-4xl font-bold text-secondary-400 font-heading leading-none mb-1">
+                                        {stats?.ai_processing_time_saved_hours ? stats.ai_processing_time_saved_hours.toLocaleString() : '---'}
+                                        <span className="text-base text-slate-400 font-normal ml-1">小时</span>
+                                    </div>
+                                    <div className="text-slate-400 text-sm font-medium mt-2">AI 累计节省材料审批时间</div>
                                 </div>
                             </div>
                         </div>
@@ -305,23 +314,23 @@ export default function HomePage() {
                     </div>
 
                     {/* Pro Plan */}
-                    <div className="bg-primary-500 text-white p-8 flex flex-col rounded-2xl shadow-2xl relative shadow-primary-500/30 cursor-pointer border border-primary-400">
+                    <div className="glass-card p-8 flex flex-col hover:-translate-y-1 transition-transform cursor-pointer relative border-2 border-primary-300">
                         <div className="absolute top-0 right-0 bg-cta-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">极具性价比</div>
                         <div className="mb-6">
-                            <h3 className="text-xl font-bold mb-2">专业导航版</h3>
-                            <p className="text-primary-100 text-sm">提供给有规律申报诉求的成长型企业</p>
+                            <h3 className="text-xl font-bold text-text-main mb-2">专业导航版</h3>
+                            <p className="text-text-muted text-sm">提供给有规律申报诉求的成长型企业</p>
                         </div>
                         <div className="mb-8">
-                            <span className="text-4xl font-bold font-heading">待定</span>
-                            <span className="text-primary-100"> / 年起</span>
+                            <span className="text-4xl font-bold font-heading text-text-main">待定</span>
+                            <span className="text-text-muted"> / 年起</span>
                         </div>
                         <ul className="space-y-4 mb-8 flex-1">
-                            <li className="flex gap-3 text-primary-50 text-sm items-start"><CheckCircle2 className="w-5 h-5 text-white shrink-0" /> <span>无限次深度匹配与依赖图谱</span></li>
-                            <li className="flex gap-3 text-primary-50 text-sm items-start"><CheckCircle2 className="w-5 h-5 text-white shrink-0" /> <span>AI 材料工厂 (含 OCR/自动抓取)</span></li>
-                            <li className="flex gap-3 text-primary-50 text-sm items-start"><CheckCircle2 className="w-5 h-5 text-white shrink-0" /> <span>产业协同引擎引荐 (联合申报)</span></li>
-                            <li className="flex gap-3 text-primary-50 text-sm items-start"><CheckCircle2 className="w-5 h-5 text-white shrink-0" /> <span>专属申报进度看板</span></li>
+                            <li className="flex gap-3 text-text-muted text-sm items-start"><CheckCircle2 className="w-5 h-5 text-primary-500 shrink-0" /> <span>无限次深度匹配与依赖图谱</span></li>
+                            <li className="flex gap-3 text-text-muted text-sm items-start"><CheckCircle2 className="w-5 h-5 text-primary-500 shrink-0" /> <span>AI 材料工厂 (含 OCR/自动抓取)</span></li>
+                            <li className="flex gap-3 text-text-muted text-sm items-start"><CheckCircle2 className="w-5 h-5 text-primary-500 shrink-0" /> <span>产业协同引擎引荐 (联合申报)</span></li>
+                            <li className="flex gap-3 text-text-muted text-sm items-start"><CheckCircle2 className="w-5 h-5 text-primary-500 shrink-0" /> <span>专属申报进度看板</span></li>
                         </ul>
-                        <button className="w-full py-3 rounded-lg bg-white text-primary-600 font-bold hover:bg-primary-50 transition-colors shadow-lg">免费试用 14 天</button>
+                        <button className="w-full py-3 rounded-lg bg-primary-500 text-white font-bold hover:bg-primary-600 transition-colors shadow-lg">免费试用 14 天</button>
                     </div>
 
                     {/* Park Plan */}

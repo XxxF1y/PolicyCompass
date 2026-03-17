@@ -6,7 +6,6 @@ import {
     ChevronRight,
     ShieldAlert,
     TrendingUp,
-    UserCircle2,
     FolderOpen,
     GripVertical,
     RotateCcw,
@@ -306,17 +305,21 @@ export default function DashboardPage() {
 
                 {!isProfileCollapsed && (
                     <div className="p-4 rounded-xl border border-adaptive-border bg-adaptive-panel">
-                        <p className="text-sm font-medium text-adaptive-text flex items-center gap-2">
-                            <UserCircle2 className="w-4 h-4 text-primary-500" />
+                        <p className="text-sm font-bold text-brand-deep flex items-center gap-2 mb-1">
+                            <TrendingUp className="w-4 h-4 text-brand-tech" />
                             {profileRole === 'talent' ? '人才竞争力雷达' : profileRole === 'park' ? '园区吸引力雷达' : '企业综合战斗力'}
                         </p>
-                        <div className="h-[240px] mt-2">
+                        <p className="text-xs text-adaptive-text-muted mb-3 border-b border-adaptive-border-light pb-2">基于全网相似大数据排名计算得出。</p>
+                        <div className="h-[320px] mt-2">
                             <ResponsiveContainer width="100%" height="100%">
-                                <RadarChart cx="50%" cy="50%" outerRadius="72%" data={profile.radarData}>
-                                    <PolarGrid stroke="#334155" />
-                                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748B', fontSize: 11, fontWeight: 600 }} />
+                                <RadarChart cx="50%" cy="50%" outerRadius="65%" data={profile.radarData}>
+                                    <PolarGrid stroke="#e2e8f0" />
+                                    <PolarAngleAxis
+                                        dataKey="subject"
+                                        tick={{ fill: '#1e3a5f', fontSize: 13, fontWeight: 700 }}
+                                    />
                                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                                    <Radar name="指标" dataKey="A" stroke="#0EA5E9" strokeWidth={2} fill="#0EA5E9" fillOpacity={0.2} />
+                                    <Radar name="指标" dataKey="A" stroke="#3182ce" strokeWidth={2.5} fill="#3182ce" fillOpacity={0.15} />
                                 </RadarChart>
                             </ResponsiveContainer>
                         </div>

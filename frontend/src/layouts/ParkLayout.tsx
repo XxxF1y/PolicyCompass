@@ -3,7 +3,6 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
     Search,
     LogOut,
-    BrainCircuit,
     AlertCircle,
     Bell,
     Settings,
@@ -42,8 +41,7 @@ export default function ParkLayout() {
             <aside className="w-64 bg-adaptive-panel border-r border-adaptive-border flex flex-col relative z-20 shadow-2xl">
                 {/* Logo */}
                 <div className="h-16 flex items-center px-6 border-b border-adaptive-border cursor-pointer" onClick={() => navigate('/park/insights')}>
-                    <BrainCircuit className="w-6 h-6 text-brand-tech mr-3" />
-                    <span className="font-heading font-bold text-lg text-adaptive-text tracking-wide">Park<span className="text-brand-tech">Space</span></span>
+                    <img src="/logo.svg" alt="政策罗盘" className="h-9 w-auto" />
                 </div>
 
                 {/* Navigation */}
@@ -84,7 +82,7 @@ export default function ParkLayout() {
                             </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-adaptive-text truncate">苏州AI园区测试账号</p>
+                            <p className="text-sm font-medium text-adaptive-text truncate">园区测试号</p>
                             <p className="text-xs text-brand-tech truncate">园区运营方</p>
                         </div>
                         <button
