@@ -34,8 +34,7 @@ export default function HomePage() {
             <nav className="fixed w-full top-0 left-0 z-50 p-4 transition-all">
                 <div className="max-w-7xl mx-auto glass-card px-6 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <BrainCircuit className="w-8 h-8 text-primary-500" />
-                        <span className="text-xl font-heading font-bold text-text-main">PolicyCompass</span>
+                        <img src="/logo.svg" alt="政策罗盘 PolicyCompass" className="h-9" />
                     </div>
                     <div className="hidden md:flex gap-8 text-text-muted font-medium">
                         <a href="#features" className="hover:text-primary-500 transition-colors">功能亮点</a>
@@ -77,26 +76,89 @@ export default function HomePage() {
                     </button>
                 </div>
 
-                {/* Dashboard Preview Overlay (Glass effect) */}
-                <div className="w-full max-w-5xl glass-card border border-white/40 p-2 shadow-2xl relative mt-4">
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10 rounded-2xl pointer-events-none" />
-                    <div className="bg-slate-50 rounded-xl overflow-hidden border border-slate-100 flex h-[400px]">
-                        <div className="w-64 bg-white border-r border-slate-100 p-4 hidden md:block">
-                            <div className="h-4 w-24 bg-slate-200 rounded mb-6" />
-                            <div className="space-y-4">
-                                {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-8 bg-slate-100 rounded" />)}
+                {/* Dashboard Preview — Live Mini Dashboard */}
+                <div className="w-full max-w-5xl glass-card border border-white/40 p-2 shadow-2xl relative mt-4 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10 rounded-2xl pointer-events-none z-10" />
+                    {/* Scale down the whole dashboard to fit the preview box */}
+                    <div className="bg-slate-50 rounded-xl border border-slate-100 flex overflow-hidden" style={{ height: 400 }}>
+                        {/* Sidebar */}
+                        <div className="w-52 bg-white border-r border-slate-100 p-4 hidden md:flex flex-col gap-1 shrink-0">
+                            <div className="flex items-center justify-center mb-5">
+                                <img src="/logo-stacked.png" alt="政策罗盘" className="h-12 w-auto" />
                             </div>
+                            {[
+                                { label: '政策匹配', icon: '🎯', active: true },
+                                { label: '申报进度', icon: '📋', active: false },
+                                { label: '材料中心', icon: '📁', active: false },
+                                { label: '成长路径', icon: '🚀', active: false },
+                                { label: '消息中心', icon: '🔔', active: false },
+                            ].map(item => (
+                                <div key={item.label} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium cursor-default transition-colors ${item.active ? 'bg-primary-50 text-primary-600' : 'text-slate-500 hover:bg-slate-50'}`}>
+                                    <span>{item.icon}</span>
+                                    <span>{item.label}</span>
+                                    {item.active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-500" />}
+                                </div>
+                            ))}
                         </div>
-                        <div className="flex-1 p-8">
-                            <div className="h-8 w-48 bg-slate-200 rounded mb-8" />
-                            <div className="grid grid-cols-3 gap-6 mb-8">
-                                {[1, 2, 3].map(i => <div key={i} className="h-24 bg-primary-50 rounded-lg border border-primary-100" />)}
+
+                        {/* Main content */}
+                        <div className="flex-1 p-5 overflow-hidden flex flex-col gap-4">
+                            {/* Header row */}
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-[11px] text-slate-400">欢迎回来</p>
+                                    <h3 className="text-sm font-bold text-slate-800">某科技公司</h3>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[10px] bg-green-50 text-green-600 border border-green-100 px-2 py-1 rounded-full font-medium">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                    AI 引擎运行中
+                                </div>
                             </div>
-                            <div className="h-48 bg-slate-100 rounded-lg" />
+
+                            {/* Stats Cards */}
+                            <div className="grid grid-cols-3 gap-3">
+                                {[
+                                    { label: '可申报政策', value: '23', unit: '项', color: 'text-primary-600', bg: 'bg-primary-50', border: 'border-primary-100', trend: '+5 本月新增' },
+                                    { label: '最高可申报金额', value: '156', unit: '万', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-100', trend: 'AI 精算结果' },
+                                    { label: '进行中申报', value: '4', unit: '项', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', trend: '2项待补材料' },
+                                ].map(card => (
+                                    <div key={card.label} className={`${card.bg} border ${card.border} rounded-lg p-3`}>
+                                        <p className="text-[10px] text-slate-500 mb-1">{card.label}</p>
+                                        <p className={`text-xl font-bold font-heading ${card.color}`}>
+                                            {card.value}<span className="text-xs font-normal ml-0.5">{card.unit}</span>
+                                        </p>
+                                        <p className="text-[9px] text-slate-400 mt-1">{card.trend}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Chart */}
+                            <div className="flex-1 bg-white rounded-lg border border-slate-100 p-3 min-h-0">
+                                <p className="text-[10px] font-semibold text-slate-600 mb-2">近6月政策补贴匹配趋势（万元）</p>
+                                <div className="h-[120px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={[
+                                            { month: '10月', value: 42 },
+                                            { month: '11月', value: 65 },
+                                            { month: '12月', value: 58 },
+                                            { month: '1月', value: 88 },
+                                            { month: '2月', value: 72 },
+                                            { month: '3月', value: 120 },
+                                        ]} margin={{ top: 4, right: 4, left: -30, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                                            <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                                            <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                                            <Tooltip contentStyle={{ fontSize: 10, borderRadius: 8, border: '1px solid #E2E8F0' }} />
+                                            <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
+
 
             {/* Trust Badges */}
             <section className="py-12 border-y border-white/30 bg-white/30 backdrop-blur-sm relative z-10">
@@ -243,14 +305,14 @@ export default function HomePage() {
                     </div>
 
                     {/* Pro Plan */}
-                    <div className="glass-card bg-primary-500 text-white p-8 flex flex-col transform md:-translate-y-4 shadow-2xl relative shadow-primary-500/20 cursor-pointer">
+                    <div className="bg-primary-500 text-white p-8 flex flex-col rounded-2xl shadow-2xl relative shadow-primary-500/30 cursor-pointer border border-primary-400">
                         <div className="absolute top-0 right-0 bg-cta-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">极具性价比</div>
                         <div className="mb-6">
                             <h3 className="text-xl font-bold mb-2">专业导航版</h3>
                             <p className="text-primary-100 text-sm">提供给有规律申报诉求的成长型企业</p>
                         </div>
                         <div className="mb-8">
-                            <span className="text-4xl font-bold font-heading">¥9,800</span>
+                            <span className="text-4xl font-bold font-heading">待定</span>
                             <span className="text-primary-100"> / 年起</span>
                         </div>
                         <ul className="space-y-4 mb-8 flex-1">
@@ -285,8 +347,7 @@ export default function HomePage() {
             <footer className="border-t border-white/40 bg-white/40 backdrop-blur-md py-12 px-4 relative z-10">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-2">
-                        <BrainCircuit className="w-6 h-6 text-primary-500" />
-                        <span className="text-lg font-heading font-bold text-text-main">PolicyCompass</span>
+                        <img src="/logo.svg" alt="政策罗盘 PolicyCompass" className="h-7" />
                     </div>
                     <div className="text-sm text-text-muted">
                         &copy; 2026 AI Policy Engine. 赋能科技转型与个体创作者.

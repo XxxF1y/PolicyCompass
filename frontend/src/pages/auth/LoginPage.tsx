@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrainCircuit, ArrowRight, Lock, User } from 'lucide-react';
+import { ArrowRight, Lock, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { AuthService } from '../../services/authService';
@@ -87,10 +87,7 @@ export default function LoginPage() {
             <div className="w-full max-w-md relative z-10">
                 {/* Logo Area */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-16 h-16 bg-white border border-adaptive-border rounded-2xl flex items-center justify-center mb-4 shadow-sm">
-                        <BrainCircuit className="w-8 h-8 text-brand-tech" />
-                    </div>
-                    <h1 className="text-3xl font-bold font-heading text-brand-deep tracking-tight mb-2">Policy<span className="text-brand-tech">Compass</span></h1>
+                    <img src="/logo-stacked.png" alt="政策罗盘 PolicyCompass" className="h-32 w-auto mb-2" />
                     <p className="text-adaptive-text-muted text-sm font-medium">企业政策申报的『智能芯片』</p>
                 </div>
 

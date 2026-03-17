@@ -6,7 +6,6 @@ import {
     Settings,
     Search,
     LogOut,
-    BrainCircuit,
     AlertCircle,
     FolderOpen,
     Bell,
@@ -42,9 +41,8 @@ export default function MainLayout() {
             {/* Sidebar */}
             <aside className="w-64 bg-adaptive-panel border-r border-adaptive-border flex flex-col relative z-20 shadow-2xl">
                 {/* Logo */}
-                <div className="h-16 flex items-center px-6 border-b border-adaptive-border cursor-pointer" onClick={() => navigate('/dashboard')}>
-                    <BrainCircuit className="w-6 h-6 text-primary-500 mr-3" />
-                    <span className="font-heading font-bold text-lg text-adaptive-text tracking-wide">Policy<span className="text-primary-500">Compass</span></span>
+                <div className="h-16 flex items-center px-4 border-b border-adaptive-border cursor-pointer" onClick={() => navigate('/dashboard')}>
+                    <img src="/logo.svg" alt="政策罗盘 PolicyCompass" className="h-11 w-auto" />
                 </div>
 
                 {/* Navigation */}
